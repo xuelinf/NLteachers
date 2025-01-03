@@ -36,7 +36,7 @@
 					background: 'rgba(234,244,255,.5)'
 				}, {
 					img: 'userlist',
-					title: '联系人',
+					title: '我的好友',
 					background: 'rgba(227,255,243,.5)'
 				}, {
 					img: 'notification',
