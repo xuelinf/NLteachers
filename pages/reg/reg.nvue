@@ -26,14 +26,11 @@
 </template>
 
 <script>
-	import {
-		mapState
-	} from 'vuex';
+	import { mapState } from 'vuex'
 	export default {
 		computed: mapState(['areaCode']),
 		data() {
 			return {
-
 			}
 		},
 		methods: {
@@ -44,9 +41,11 @@
 				uni.fui.href('../areaCode/areaCode')
 			},
 			captcha() {
-				uni.fui.href('../captcha/captcha?type=2')
+				// 直接使用navigateTo而不是href，确保参数正确传递
+				uni.navigateTo({
+					url: '/pages/captcha/captcha?type=2'
+				})
 			}
-
 		}
 	}
 </script>

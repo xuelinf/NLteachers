@@ -1,5 +1,65 @@
 {
 	"pages": [{
+		"path": "pages/reg/reg",
+		"style": {
+			// #ifdef H5
+			"titleNView": false,
+			// #endif
+			"navigationBarTitleText": "",
+			"enablePullDownRefresh": false,
+			"mp-alipay": {
+				"allowsBounceVertical": "YES"
+			}
+		}
+	}, {
+		"path": "pages/captcha/captcha",
+		"style": {
+			// #ifdef H5
+			"titleNView": false,
+			// #endif
+			"navigationBarTitleText": "请输入验证码",
+			"enablePullDownRefresh": false,
+			"mp-alipay": {
+				"allowsBounceVertical": "YES"
+			}
+		}
+	}, {
+		"path": "pages/home/home",
+		"style": {
+			"navigationStyle": "custom",
+			"enablePullDownRefresh": false,
+			"mp-alipay": {
+				"allowsBounceVertical": "YES"
+			}
+		}
+	}, {
+		"path": "pages/agents/agents",
+		"style": {
+			"navigationStyle": "custom",
+			"enablePullDownRefresh": false,
+			"mp-alipay": {
+				"allowsBounceVertical": "YES"
+			}
+		}
+	}, {
+		"path": "pages/chat/chat",
+		"style": {
+			// #ifdef H5
+			"titleNView": false,
+			// #endif
+			"navigationBarTitleText": "念念老师",
+			"enablePullDownRefresh": false
+		}
+	}, {
+		"path": "pages/my/my",
+		"style": {
+			// #ifdef H5
+			"titleNView": false,
+			// #endif
+			"navigationBarTitleText": "我的",
+			"enablePullDownRefresh": false
+		}
+	}, {
 		"path": "pages/login/login",
 		"style": {
 			// #ifdef H5
@@ -11,7 +71,6 @@
 				"allowsBounceVertical": "YES"
 			}
 		}
-
 	}, {
 		"path": "pages/index/index",
 		"style": {
@@ -24,19 +83,6 @@
 				"allowsBounceVertical": "YES"
 			}
 		}
-	}, {
-		"path": "pages/reg/reg",
-		"style": {
-			// #ifdef H5
-			"titleNView": false,
-			// #endif
-			"navigationBarTitleText": "",
-			"enablePullDownRefresh": false,
-			"mp-alipay": {
-				"allowsBounceVertical": "YES"
-			}
-		}
-
 	}, {
 		"path": "pages/areaCode/areaCode",
 		"style": {
@@ -58,20 +104,6 @@
 				"allowsBounceVertical": "NO"
 			}
 		}
-
-	}, {
-		"path": "pages/captcha/captcha",
-		"style": {
-			// #ifdef H5
-			"titleNView": false,
-			// #endif
-			"navigationBarTitleText": "请输入验证码",
-			"enablePullDownRefresh": false,
-			"mp-alipay": {
-				"allowsBounceVertical": "YES"
-			}
-		}
-
 	}, {
 		"path": "pages/profile/profile",
 		"style": {
@@ -84,27 +116,6 @@
 				"allowsBounceVertical": "YES"
 			}
 		}
-
-	}, {
-		"path": "pages/my/my",
-		"style": {
-			// #ifdef H5
-			"titleNView": false,
-			// #endif
-			"navigationBarTitleText": "我的",
-			"enablePullDownRefresh": false
-		}
-
-	}, {
-		"path": "pages/chat/chat",
-		"style": {
-			// #ifdef H5
-			"titleNView": false,
-			// #endif
-			"navigationBarTitleText": "永不离开的支教老师",
-			"enablePullDownRefresh": false
-		}
-
 	}, {
 		"path": "pages/contacts/contacts",
 		"style": {
@@ -126,7 +137,6 @@
 				"allowsBounceVertical": "NO"
 			}
 		}
-
 	}, {
 		"path": "pages/notice/notice",
 		"style": {
@@ -136,7 +146,6 @@
 			"navigationBarTitleText": "消息通知",
 			"enablePullDownRefresh": false
 		}
-
 	}],
 	"easycom": {
 		"autoscan": true,

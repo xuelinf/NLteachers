@@ -1,0 +1,181 @@
+<template>
+	<view class="container">
+		<!-- 顶部安全区域 -->
+		<view class="status-bar"></view>
+
+		<!-- 内容区域 -->
+		<scroll-view class="content" scroll-y>
+			<!-- 顶部横幅 -->
+			<view class="banner">
+				<image class="banner-image" src="/static/images/home-banner.png" mode="aspectFit"></image>
+			</view>
+
+			<!-- 四个功能卡片 -->
+			<view class="card-grid">
+				<view class="card-item" @tap="navigateToAgents('companion')">
+					<image class="card-image" src="/static/images/companion-card.png" mode="aspectFit"></image>
+				</view>
+				<view class="card-item" @tap="navigateToAgents('growth')">
+					<image class="card-image" src="/static/images/growth-card.png" mode="aspectFit"></image>
+				</view>
+				<view class="card-item" @tap="navigateToAgents('fun')">
+					<image class="card-image" src="/static/images/fun-card.png" mode="aspectFit"></image>
+				</view>
+				<view class="card-item" @tap="navigateToAgents('heart')">
+					<image class="card-image" src="/static/images/heart-card.png" mode="aspectFit"></image>
+				</view>
+			</view>
+			
+			<!-- 底部留白区域 -->
+			<view class="bottom-space"></view>
+		</scroll-view>
+
+		<!-- 底部导航栏 -->
+		<view class="tabbar">
+			<view class="tabbar-item" @tap="navigateToChat()">
+				<view class="tabbar-icon-box">
+					<fui-icon name="message" :size="48" :color="current === 0 ? '#465CFF' : '#333333'"></fui-icon>
+					<text class="tabbar-text" :class="{'tabbar-text-active': current === 0}">聊天</text>
+				</view>
+			</view>
+			<view class="tabbar-item">
+				<view class="tabbar-icon-box">
+					<fui-icon name="home" :size="48" color="#465CFF"></fui-icon>
+					<text class="tabbar-text tabbar-text-active">主页</text>
+				</view>
+			</view>
+			<view class="tabbar-item" @tap="navigateToMy()">
+				<view class="tabbar-icon-box">
+					<fui-icon name="my" :size="48" :color="current === 2 ? '#465CFF' : '#333333'"></fui-icon>
+					<text class="tabbar-text" :class="{'tabbar-text-active': current === 2}">我的</text>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+export default {
+	data() {
+		return {
+			current: 1
+		}
+	},
+	methods: {
+		navigateToAgents(category) {
+			uni.navigateTo({
+				url: `/pages/agents/agents?category=${category}`
+			})
+		},
+		navigateToChat() {
+			uni.redirectTo({
+				url: '/pages/index/index'
+			})
+		},
+		navigateToMy() {
+			uni.navigateTo({
+				url: '/pages/my/my'
+			})
+		}
+	}
+}
+</script>
+
+<style>
+.container {
+	flex: 1;
+	background-color: #FFFFFF;
+}
+
+/* 状态栏占位 */
+.status-bar {
+	height: var(--status-bar-height);
+	background-color: #FFFFFF;
+}
+
+/* 内容区域可滚动 */
+.content {
+	flex: 1;
+}
+
+/* Banner样式 */
+.banner {
+	padding: 0 30rpx;
+	margin-top: 30rpx;
+	height: 460rpx;
+	justify-content: center;
+	margin-bottom: 30rpx;
+}
+
+.banner-image {
+	width: 690rpx;
+	height: 460rpx;
+	border-radius: 24rpx;
+}
+
+/* 卡片网格样式 */
+.card-grid {
+	padding: 0 30rpx;
+	flex-direction: row;
+	flex-wrap: wrap;
+	justify-content: space-between;
+}
+
+.card-item {
+	width: 330rpx;
+	height: 330rpx;
+	margin-bottom: 30rpx;
+	border-radius: 24rpx;
+	overflow: hidden;
+	justify-content: center;
+}
+
+.card-image {
+	width: 330rpx;
+	height: 330rpx;
+	border-radius: 24rpx;
+}
+
+/* 底部留白区域 */
+.bottom-space {
+	height: 240rpx;
+}
+
+/* TabBar样式 */
+.tabbar {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 200rpx;
+	background-color: #FFFFFF;
+	flex-direction: row;
+	justify-content: space-around;
+	align-items: center;
+	border-top-width: 1rpx;
+	border-top-color: #EEEEEE;
+	padding-bottom: env(safe-area-inset-bottom);
+}
+
+.tabbar-item {
+	flex: 1;
+	height: 100%;
+	justify-content: center;
+	align-items: center;
+}
+
+.tabbar-icon-box {
+	justify-content: center;
+	align-items: center;
+}
+
+.tabbar-text {
+	font-size: 20rpx;
+	color: #333333;
+	margin-top: 4rpx;
+}
+
+.tabbar-text-active {
+	color: #465CFF;
+}
+</style>

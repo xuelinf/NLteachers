@@ -16,25 +16,20 @@
 			<view class="fui-btn__box">
 				<fui-button text="确定" radius="96rpx" bold @click="onClick"></fui-button>
 			</view>
-			
 		</view>
 	</view>
 </template>
 
 <script>
-	import {
-		mapState
-	} from 'vuex';
 	export default {
-		computed: mapState(['areaCode']),
 		data() {
 			return {
 				code: '',
-				type: 1
+				type: '1'
 			}
 		},
-		onLoad(e) {
-			this.type = e.type || 1
+		onLoad(options) {
+			this.type = String(options.type || '1')
 		},
 		methods: {
 			onComplete(e) {
@@ -42,20 +37,17 @@
 				uni.fui.toast(`您输入的验证码为${this.code}`)
 			},
 			onClick() {
-				if (this.type == 1) {
-					uni.fui.href('../index/index')
-				} else {
-					uni.fui.href('../profile/profile')
-				}
+				// 无论是登录还是注册，验证成功后都跳转到home页面
+				uni.reLaunch({
+					url: '/pages/home/home'
+				})
 			}
-
 		}
 	}
 </script>
 
 <style>
 	.fui-wrap {
-		/* align-items: center; */
 		padding: 0 48rpx;
 	}
 	
@@ -70,10 +62,8 @@
 		padding-top: 128rpx;
 	}
 	.fui-mobile__text{
-		/* color: #9E9E9E; */
 		padding-left: 16rpx;
 	}
-
 
 	.fui-form__box {
 		/* #ifndef APP-NVUE */
