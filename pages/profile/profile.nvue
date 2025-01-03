@@ -1,0 +1,73 @@
+<template>
+	<view class="fui-wrap">
+		<view class="fui-avatar__box">
+			<fui-avatar background="transparent" width="200" height="200" src="/static/images/chat/avatar/img_def.png">
+			</fui-avatar>
+		</view>
+		<view class="fui-form__box">
+			<fui-input :border-bottom="false" :radius="24" backgroundColor="#FAFAFA" placeholder="姓名" bottomLeft="0">
+			</fui-input>
+			<fui-input marginTop="24" :border-bottom="false" :radius="24" backgroundColor="#FAFAFA" placeholder="昵称"
+				bottomLeft="0">
+			</fui-input>
+			<fui-input marginTop="24" :border-bottom="false" :radius="24" backgroundColor="#FAFAFA" placeholder="邮箱"
+				bottomLeft="0">
+				<fui-icon name="mail" color="#9E9E9E" :size="36"></fui-icon>
+			</fui-input>
+			<fui-input marginTop="24" :border-bottom="false" :radius="24" backgroundColor="#FAFAFA" placeholder="一句话简介"
+				bottomLeft="0">
+				<fui-icon name="edit" color="#9E9E9E" :size="36"></fui-icon>
+			</fui-input>
+			<view class="fui-btn__box">
+				<fui-button text="保存" radius="96rpx" bold @click="save"></fui-button>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+
+			}
+		},
+		methods: {
+			save() {
+				uni.navigateBack({
+					delta: 3
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+	.fui-wrap {
+		padding: 0 48rpx;
+	}
+
+	.fui-avatar__box {
+		/* #ifndef APP-NVUE */
+		width: 100%;
+		display: flex;
+		/* #endif */
+		flex-direction: row;
+		justify-content: center;
+		padding-top: 48rpx;
+	}
+
+	.fui-form__box {
+		/* #ifndef APP-NVUE */
+		width: 100%;
+		/* #endif */
+		padding-top: 32rpx;
+	}
+
+	.fui-btn__box {
+		/* #ifndef APP-NVUE */
+		width: 100%;
+		/* #endif */
+		padding-top: 96rpx;
+	}
+</style>

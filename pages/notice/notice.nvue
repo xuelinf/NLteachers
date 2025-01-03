@@ -1,0 +1,81 @@
+<template>
+	<view case="fui-wrap">
+		<fui-list-cell :highlight="false" bottom-right="32">
+			<view class="fui-cell__box">
+				<text class="fui-title">通知显示消息详情</text>
+				<fui-switch color="#246BFD"></fui-switch>
+			</view>
+		</fui-list-cell>
+		<text class="fui-text">应用未打开时</text>
+		<fui-list-cell :highlight="false" bottom-right="32">
+			<view class="fui-cell__box">
+				<text class="fui-title">消息通知</text>
+				<fui-switch color="#246BFD"></fui-switch>
+			</view>
+		</fui-list-cell>
+		<fui-list-cell :highlight="false" bottom-right="32">
+			<view class="fui-cell__box">
+				<text class="fui-title">语音和视频通话提醒</text>
+				<fui-switch color="#246BFD"></fui-switch>
+			</view>
+		</fui-list-cell>
+		<text class="fui-text">应用打开时</text>
+		<fui-list-cell :highlight="false" bottom-right="32">
+			<view class="fui-cell__box">
+				<text class="fui-title">消息通知横幅</text>
+				<fui-switch color="#246BFD"></fui-switch>
+			</view>
+		</fui-list-cell>
+		<fui-list-cell :highlight="false" bottom-right="32">
+			<view class="fui-cell__box">
+				<text class="fui-title">消息通知提示音</text>
+				<fui-switch color="#246BFD"></fui-switch>
+			</view>
+		</fui-list-cell>
+		<fui-list-cell :highlight="false" bottom-right="32">
+			<view class="fui-cell__box">
+				<text class="fui-title">震动</text>
+				<fui-switch color="#246BFD"></fui-switch>
+			</view>
+		</fui-list-cell>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+
+			}
+		},
+		methods: {
+
+		}
+	}
+</script>
+
+<style>
+	.fui-cell__box {
+		/* #ifndef APP-NVUE */
+		width: 100%;
+		display: flex;
+		/* #endif */
+		/* #ifdef APP-NVUE */
+		flex: 1;
+		/* #endif */
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+	}
+	.fui-text{
+		font-size: 28rpx;
+		color: #9E9E9E;
+		padding: 32rpx 32rpx 0 32rpx;
+		/* #ifndef APP-NVUE */
+		display: block;
+		/* #endif */
+	}
+	.fui-title{
+		font-size: 32rpx;
+	}
+</style>

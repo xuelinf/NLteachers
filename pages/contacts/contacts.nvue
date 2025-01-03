@@ -1,0 +1,79 @@
+<template>
+	<fui-index-list isSrc background="#FAFAFA" :listData="lists" keyColor="#555" @init="init" @click="itemClick">
+		<fui-search-bar background="#FAFAFA"></fui-search-bar>
+		<fui-list-cell :bottom-border="false">
+			<view class="fui-flex__between">
+				<image src="/static/images/chat/img_add.png" class="fui-icon__add"></image>
+				<text class="fui-text">新的朋友</text>
+			</view>
+		</fui-list-cell>
+		<template v-slot:footer>
+			<fui-loadmore v-if="!show"></fui-loadmore>
+			<fui-list v-else top-left="32">
+				<view class="fui-divider">
+					<text class="fui-divider__text">375个朋友</text>
+				</view>
+			</fui-list>
+		</template>
+	</fui-index-list>
+</template>
+
+<script>
+	import lists from './index.js'
+	export default {
+		data() {
+			return {
+				lists,
+				show: false
+			}
+		},
+		onLoad() {
+			
+		},
+		methods: {
+			init() {
+				this.show = true;
+			},
+			itemClick(e) {
+				console.log(e)
+				uni.fui.href('../chat/chat')
+			}
+		}
+	}
+</script>
+
+<style>
+	.fui-divider {
+		/* #ifndef APP-NVUE */
+		width: 100%;
+		display: flex;
+		/* #endif */
+		height: 120rpx;
+		flex-direction: row;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.fui-divider__text {
+		color: #9E9E9E;
+		text-align: center;
+	}
+
+	.fui-flex__between {
+		/* #ifndef APP-NVUE */
+		display: flex;
+		/* #endif */
+		flex-direction: row;
+		align-items: center;
+	}
+
+	.fui-icon__add {
+		width: 88rpx;
+		height: 88rpx;
+		margin-right: 24rpx;
+	}
+
+	.fui-text {
+		font-size: 32rpx;
+	}
+</style>

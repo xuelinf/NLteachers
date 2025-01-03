@@ -1,0 +1,65 @@
+/* #ifndef APP-NVUE */
+page {
+	background-color: var(--fui-color-white, #FFFFFF);
+	font-size: 32rpx;
+	color: var(--fui-color-title, #181818);
+	font-family: -apple-system-font, Helvetica Neue, Helvetica, sans-serif;
+}
+
+::-webkit-scrollbar {
+	width: 0 !important;
+	height: 0 !important;
+	color: transparent !important;
+	display: none;
+}
+
+/* #endif */
+
+.fui-wrap {
+	/* #ifndef APP-NVUE */
+	width: 100%;
+	display: flex;
+	box-sizing: border-box;
+	/* #endif */
+	flex-direction: column;
+}
+
+.fui-flex__center {
+	/* #ifndef APP-NVUE */
+	display: flex;
+	align-items: center !important;
+	/* #endif */
+	flex-direction: column;
+	/* #ifdef APP-NVUE */
+	align-items: center;
+	/* #endif */
+}
+
+/* #ifdef H5 */
+.fui--active {
+	cursor: pointer;
+}
+
+/* #endif */
+.fui--active:active {
+	opacity: .5;
+}
+
+.fui-primary {
+	color: #246BFD !important;
+}
+
+.fui-ellipsis {
+	/* #ifndef APP-NVUE */
+	white-space: nowrap;
+	/* #endif */
+	text-overflow: ellipsis;
+	overflow: hidden;
+	/* #ifdef APP-NVUE */
+	lines: 1;
+	/* #endif */
+}
+
+.fui-size{
+	font-size: 32rpx;
+}
