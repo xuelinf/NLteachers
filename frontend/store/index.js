@@ -4,25 +4,29 @@ import Vue from 'vue'
 import Vuex from 'vuex'
 Vue.use(Vuex)
 const store = new Vuex.Store({
-// #endif
+			// #endif
 
-// #ifdef VUE3
-import {
-	createStore
-} from 'vuex'
-const store = createStore({
-// #endif
-	state: {
-		areaCode: '+86'
-	},
-	mutations: {
-		setAreaCode(state, areaCode) {
-			state.areaCode = areaCode || '+86'
-		}
-	},
-	actions: {
+			// #ifdef VUE3
+			import {
+				createStore
+			} from 'vuex'
+			const store = createStore({
+				// #endif
+				state: {
+					areaCode: '+86',
+					phoneNumber: '',
+				},
+				mutations: {
+					setAreaCode(state, areaCode) {
+						state.areaCode = areaCode || '+86'
+					},
+					setPhoneNumber(state, phoneNumber) {
+						state.phoneNumber = phoneNumber || ''
+					},
+				},
+				actions: {
 
-	}
-})
+				}
+			})
 
-export default store
+			export default store

@@ -2,7 +2,7 @@
 	<view class="fui-wrap">
 		<view class="fui-mobile__box">
 			<text class="fui-size">已发送验证码至</text>
-			<text class="fui-mobile__text fui-size">+86 188****8888</text>
+			<text class="fui-mobile__text fui-size">{{ maskedPhoneNumber }}</text>
 		</view>
 		<view class="fui-form__box">
 			<fui-single-input border="1" borderWidth="2" radius="16" activeColor="#246BFD" cursorHeight="40"
@@ -21,11 +21,26 @@
 </template>
 
 <script>
+	import {
+		apiClient
+	} from '../../src/tsrpc';
+	import {
+		Define
+	} from '../../src/define/define';
 	export default {
 		data() {
 			return {
 				code: '',
 				type: '1'
+			}
+		},
+		computed: {
+			maskedPhoneNumber() {
+				// return '+86 188****8888';
+
+				return this.$store.state.areaCode +
+					' ' +
+					this.$store.state.phoneNumber.replace(/(\d{3})\d{4}(\d{4})/, '$1****$2');
 			}
 		},
 		onLoad(options) {
@@ -36,11 +51,23 @@
 				this.code = e.detail.value
 				uni.fui.toast(`您输入的验证码为${this.code}`)
 			},
-			onClick() {
-				// 无论是登录还是注册，验证成功后都跳转到home页面
-				uni.reLaunch({
-					url: '/pages/home/home'
-				})
+			async onClick() {
+				const ret = await apiClient.callApi('PhoneCodeLoginVerify', {
+					phone: this.$store.state.areaCode + this.$store.state.phoneNumber,
+					code: 0,
+				});
+				if (ret.isSucc) {
+					localStorage.setItem(Define.SessionStorageKey, JSON.stringify(ret.res.session))
+
+					// 无论是登录还是注册，验证成功后都跳转到home页面
+					uni.reLaunch({
+						url: '/pages/home/home'
+					});
+				} else {
+					uni.reLaunch({
+						url: '/pages/login/login'
+					});
+				}
 			}
 		}
 	}
@@ -50,8 +77,8 @@
 	.fui-wrap {
 		padding: 0 48rpx;
 	}
-	
-	.fui-mobile__box{
+
+	.fui-mobile__box {
 		/* #ifndef APP-NVUE */
 		width: 100%;
 		display: flex;
@@ -61,7 +88,8 @@
 		flex-direction: row;
 		padding-top: 128rpx;
 	}
-	.fui-mobile__text{
+
+	.fui-mobile__text {
 		padding-left: 16rpx;
 	}
 

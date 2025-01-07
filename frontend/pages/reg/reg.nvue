@@ -6,7 +6,7 @@
 		</view>
 		<view class="fui-form__box">
 			<fui-input type="number" :border-bottom="false" :radius="24" backgroundColor="#FAFAFA" placeholder="请输入手机号码"
-				bottomLeft="0" maxlength="11">
+				bottomLeft="0" maxlength="11" v-model="phoneNumber">
 				<template v-slot:left>
 					<view class="fui-areacode__box fui--active" @tap.stop="area">
 						<text class="fui-area__code fui-color__primary">{{areaCode}}</text>
@@ -26,25 +26,41 @@
 </template>
 
 <script>
-	import { mapState } from 'vuex'
+	import {
+		mapState,
+		mapMutations,
+	} from 'vuex';
+	import {
+		apiClient
+	} from '../../src/tsrpc';
 	export default {
 		computed: mapState(['areaCode']),
 		data() {
 			return {
+				phoneNumber: '',
 			}
 		},
 		methods: {
+			...mapMutations(['setPhoneNumber']),
 			login() {
-				uni.navigateBack()
+				uni.navigateTo({
+					url: '/pages/login/login'
+				});
 			},
 			area() {
-				uni.fui.href('../areaCode/areaCode')
+				uni.fui.href('/pages/areaCode/areaCode');
 			},
-			captcha() {
+			async captcha() {
+				this.setPhoneNumber(this.phoneNumber.toString());
+
+				// await apiClient.callApi('PhoneCodeLogin', {
+				// 	phone: this.$store.state.areaCode + this.$store.state.phoneNumber,
+				// });
+
 				// 直接使用navigateTo而不是href，确保参数正确传递
 				uni.navigateTo({
-					url: '/pages/captcha/captcha?type=2'
-				})
+					url: '/pages/captcha/captcha?type=2',
+				});
 			}
 		}
 	}

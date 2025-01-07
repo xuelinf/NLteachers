@@ -1,0 +1,36 @@
+{
+  "name": "1mind-backend",
+  "version": "0.1.0",
+  "main": "index.js",
+  "private": true,
+  "scripts": {
+    "dev": "tsrpc-cli dev",
+    "build": "tsrpc-cli build",
+    "doc": "tsrpc-cli doc",
+    "test": "mocha test/**/*.test.ts",
+    "proto": "tsrpc-cli proto",
+    "sync": "tsrpc-cli sync",
+    "api": "tsrpc-cli api"
+  },
+  "devDependencies": {
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^22.10.5",
+    "mocha": "^11.0.1",
+    "onchange": "^7.1.0",
+    "prisma": "^6.2.1",
+    "ts-node": "^10.9.2",
+    "tsrpc-cli": "^2.4.5",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@alttiri/base85": "^1.8.0",
+    "@coze/api": "1.0.15",
+    "@node-rs/xxhash": "^1.7.6",
+    "@prisma/client": "^6.2.1",
+    "dayjs": "^1.11.13",
+    "ioredis": "^5.4.2",
+    "nanoid": "^5.0.9",
+    "sqids": "^0.3.0",
+    "tsrpc": "^3.4.17"
+  }
+}

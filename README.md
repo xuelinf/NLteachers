@@ -37,14 +37,16 @@
 
 ```
 NLteachers/
-├── pages/                # 页面文件
-│   ├── chat/            # 聊天相关页面
-│   ├── contacts/        # 联系人页面
-│   ├── my/             # 个人中心
-│   └── index/          # 首页
-├── components/          # 组件文件夹
-├── static/             # 静态资源
-└── common/             # 公共文件
+├── frontend/         # 前端目录
+│   ├── pages/        # 页面文件
+│   │   ├── chat/     # 聊天相关页面
+│   │   ├── contacts/ # 联系人页面
+│   │   ├── my/       # 个人中心
+│   │   └── index/    # 首页
+│   ├── components/   # 组件文件夹
+│   ├── static/       # 静态资源
+│   └── common/       # 公共文件
+└── backend/          # 后端目录
 ```
 
 ## 开始使用
@@ -62,8 +64,13 @@ cd NLteachers
 ```
 
 3. 运行项目
-- 使用 HBuilderX 导入项目
-- 点击运行到浏览器/模拟器/真机
+- 前端
+  - 使用 HBuilderX 导入前端项目
+  - 点击运行到浏览器/模拟器/真机
+- 后端
+  - `npm run dev` 运行本地开发服务器
+  - `npm run build` 执行构建
+  - `npm run doc` 生成 API 接口文档
 
 ## 预览
 
