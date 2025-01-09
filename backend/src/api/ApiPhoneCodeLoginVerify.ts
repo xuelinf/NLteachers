@@ -33,7 +33,7 @@ export default async function (call: ApiCall<ReqPhoneCodeLoginVerify, ResPhoneCo
     const redisUser = new RedisUser();
     redisUser.userId = user!.id;
     redisUser.session = nanoid();
-    redisUser.RedisSet(userIdSqid);
+    redisUser.Set(userIdSqid);
 
     call.succ({
         session: {

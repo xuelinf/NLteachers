@@ -11,16 +11,16 @@ import { encodeBase85 } from '@alttiri/base85';
 // 1. EXECUTE `npm run dev` TO START A LOCAL DEV SERVER
 // 2. EXECUTE `npm test` TO START UNIT TEST
 
-describe('ApiLogin', function () {
+describe('ApiPhoneCodeLogin', () => {
     const client = new HttpClient(serviceProto, {
-        server: `http://127.0.0.1:${Config.port}`,
+        server: `http://127.0.0.1:${Config.httpPort}`,
         logger: console,
     });
 
     const now = dayjs();
     const phone = `test ${Math.random()} ${now.toString()}`;
 
-    it('PhoneCodeLogin', async function () {
+    it('PhoneCodeLogin', async () => {
         const ret = await client.callApi('PhoneCodeLogin', {
             phone,
         });
@@ -29,7 +29,7 @@ describe('ApiLogin', function () {
         console.error(ret.res);
     });
 
-    it('PhoneCodeLoginUnexist', async function () {
+    it('PhoneCodeLoginUnexist', async () => {
         const ret = await client.callApi('PhoneCodeLoginVerify', {
             phone,
             code: 0,
@@ -39,7 +39,7 @@ describe('ApiLogin', function () {
         console.error(ret.res);
     });
 
-    it('PhoneCodeLoginExist', async function () {
+    it('PhoneCodeLoginExist', async () => {
         const ret = await client.callApi('PhoneCodeLoginVerify', {
             phone,
             code: 0,

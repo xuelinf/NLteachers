@@ -3,6 +3,7 @@ import { Config } from '../config';
 import { xxh3 } from '@node-rs/xxhash';
 import { TextEncoder } from 'util';
 import { encodeBase85 } from '@alttiri/base85';
+import * as crypto from 'crypto';
 
 export function computeSSPassword(spassword: string, userId: number): { userIdSqid: string, sspassword: string } {
     const sqids = new Sqids({
@@ -20,4 +21,10 @@ export function computeSSPassword(spassword: string, userId: number): { userIdSq
     const sspassword = encodeBase85(buf);
 
     return { userIdSqid, sspassword };
+}
+
+export function randomInt64(): string {
+    const buffer = crypto.randomBytes(8);
+    const int64 = BigInt('0x' + buffer.toString('hex'));
+    return int64.toString();
 }

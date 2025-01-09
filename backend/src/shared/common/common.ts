@@ -13,3 +13,11 @@ export interface Session {
      */
     session: string;
 }
+
+/**
+ * 智能体类型
+ */
+export enum BotType {
+    安全知识闯关 = '7457732463407284234',
+    生活顺口溜 = '7457739616813072396',
+}

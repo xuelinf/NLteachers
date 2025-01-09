@@ -47,7 +47,7 @@ export default async function (call: ApiCall<ReqRegister, ResRegister>) {
         const redisUser = new RedisUser();
         redisUser.userId = user.id;
         redisUser.session = nanoid();
-        redisUser.RedisSet(userIdSqid);
+        redisUser.Set(userIdSqid);
 
         call.succ({
             session: {

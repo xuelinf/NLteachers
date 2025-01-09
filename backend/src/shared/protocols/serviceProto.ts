@@ -1,4 +1,6 @@
 import { ServiceProto } from 'tsrpc-proto';
+import { MsgAnswer } from './MsgAnswer';
+import { MsgQuistion } from './MsgQuistion';
 import { ReqLogin, ResLogin } from './PtlLogin';
 import { ReqPhoneCodeLogin, ResPhoneCodeLogin } from './PtlPhoneCodeLogin';
 import { ReqPhoneCodeLoginVerify, ResPhoneCodeLoginVerify } from './PtlPhoneCodeLoginVerify';
@@ -24,13 +26,24 @@ export interface ServiceType {
         }
     },
     msg: {
-
+        "Answer": MsgAnswer,
+        "Quistion": MsgQuistion
     }
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 4,
+    "version": 7,
     "services": [
+        {
+            "id": 6,
+            "name": "Answer",
+            "type": "msg"
+        },
+        {
+            "id": 7,
+            "name": "Quistion",
+            "type": "msg"
+        },
         {
             "id": 2,
             "name": "Login",
@@ -57,6 +70,110 @@ export const serviceProto: ServiceProto<ServiceType> = {
         }
     ],
     "types": {
+        "MsgAnswer/MsgAnswer": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 2,
+                    "name": "err",
+                    "type": {
+                        "type": "String"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 3,
+                    "name": "conversation",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 0,
+                    "name": "msg",
+                    "type": {
+                        "type": "String"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 1,
+                    "name": "complete",
+                    "type": {
+                        "type": "Boolean"
+                    },
+                    "optional": true
+                }
+            ]
+        },
+        "MsgQuistion/MsgQuistion": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "session",
+                    "type": {
+                        "type": "Reference",
+                        "target": "../common/common/Session"
+                    }
+                },
+                {
+                    "id": 3,
+                    "name": "botType",
+                    "type": {
+                        "type": "Reference",
+                        "target": "../common/common/BotType"
+                    }
+                },
+                {
+                    "id": 2,
+                    "name": "conversation",
+                    "type": {
+                        "type": "String"
+                    },
+                    "optional": true
+                },
+                {
+                    "id": 1,
+                    "name": "msg",
+                    "type": {
+                        "type": "String"
+                    }
+                }
+            ]
+        },
+        "../common/common/Session": {
+            "type": "Interface",
+            "properties": [
+                {
+                    "id": 0,
+                    "name": "userId",
+                    "type": {
+                        "type": "String"
+                    }
+                },
+                {
+                    "id": 1,
+                    "name": "session",
+                    "type": {
+                        "type": "String"
+                    }
+                }
+            ]
+        },
+        "../common/common/BotType": {
+            "type": "Enum",
+            "members": [
+                {
+                    "id": 0,
+                    "value": "7457732463407284234"
+                },
+                {
+                    "id": 1,
+                    "value": "7457739616813072396"
+                }
+            ]
+        },
         "PtlLogin/ReqLogin": {
             "type": "Interface",
             "extends": [
@@ -112,25 +229,6 @@ export const serviceProto: ServiceProto<ServiceType> = {
         },
         "base/BaseResponse": {
             "type": "Interface"
-        },
-        "../common/common/Session": {
-            "type": "Interface",
-            "properties": [
-                {
-                    "id": 0,
-                    "name": "userId",
-                    "type": {
-                        "type": "String"
-                    }
-                },
-                {
-                    "id": 1,
-                    "name": "session",
-                    "type": {
-                        "type": "String"
-                    }
-                }
-            ]
         },
         "PtlPhoneCodeLogin/ReqPhoneCodeLogin": {
             "type": "Interface",

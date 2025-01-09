@@ -5,6 +5,8 @@ import { serviceProto } from "./shared/protocols/serviceProto";
 import { Config } from "./config";
 import { CommunicationMode } from "./define/define";
 import { CheckRedisPrefix } from "./define/redis";
+import { ChatService } from "./chat/chatService";
+import { CozeService } from "./chat/cozeService";
 
 // Create the Server
 const httpServer = new HttpServer(serviceProto, {
@@ -20,6 +22,9 @@ const wsServer = new WsServer(serviceProto, {
 async function init() {
     CheckRedisPrefix();
     await process.loadEnvFile();
+    
+    CozeService.init();
+    ChatService.init(wsServer);
 
     // Auto implement APIs
     await httpServer.autoImplementApi(path.resolve(__dirname, 'api'));

@@ -10,9 +10,9 @@ import { encodeBase85 } from '@alttiri/base85';
 // 1. EXECUTE `npm run dev` TO START A LOCAL DEV SERVER
 // 2. EXECUTE `npm test` TO START UNIT TEST
 
-describe('ApiLogin', function () {
+describe('ApiLogin', () => {
     const client = new HttpClient(serviceProto, {
-        server: `http://127.0.0.1:${Config.port}`,
+        server: `http://127.0.0.1:${Config.httpPort}`,
         logger: console,
     });
 
@@ -28,7 +28,7 @@ describe('ApiLogin', function () {
     const buf = new Uint8Array(spasswordBuffer.buffer);
     const spassword = encodeBase85(buf);
 
-    it('LoginVoidUser', async function () {
+    it('LoginVoidUser', async () => {
         const ret = await client.callApi('Login', {
             username,
             spassword,
@@ -38,7 +38,7 @@ describe('ApiLogin', function () {
         console.error(ret.err);
     });
 
-    it('RegisterUser', async function () {
+    it('RegisterUser', async () => {
         const ret = await client.callApi('Register', {
             username,
             spassword,
@@ -48,7 +48,7 @@ describe('ApiLogin', function () {
         console.log(ret.res);
     });
 
-    it('LoginUser', async function () {
+    it('LoginUser', async () => {
         const ret = await client.callApi('Login', {
             username,
             spassword,
@@ -58,7 +58,7 @@ describe('ApiLogin', function () {
         console.error(ret.res);
     });
 
-    it('RegisterExistsUser', async function () {
+    it('RegisterExistsUser', async () => {
         const ret = await client.callApi('Register', {
             username,
             spassword,
@@ -68,7 +68,7 @@ describe('ApiLogin', function () {
         console.log(ret.err);
     });
 
-    it('LoginUserWrongPassword', async function () {
+    it('LoginUserWrongPassword', async () => {
         const ret = await client.callApi('Login', {
             username,
             spassword: 'Wrong',
