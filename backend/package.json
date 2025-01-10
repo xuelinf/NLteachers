@@ -24,7 +24,7 @@
   },
   "dependencies": {
     "@alttiri/base85": "^1.8.0",
-    "@coze/api": "1.0.15",
+    "@coze/api": "^1.0.17",
     "@node-rs/xxhash": "^1.7.6",
     "@prisma/client": "^6.2.1",
     "dayjs": "^1.11.13",
