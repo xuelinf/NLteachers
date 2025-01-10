@@ -1,6 +1,6 @@
 export interface MsgAnswer {
     err?: string;
-    conversation: string;
+    conversation?: string;
     msg?: string;
     complete?: boolean;
 }

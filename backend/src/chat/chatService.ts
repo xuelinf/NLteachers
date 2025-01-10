@@ -2,7 +2,7 @@ import { MsgCall, WsServer } from "tsrpc";
 import { MsgQuistion } from "../shared/protocols/MsgQuistion";
 import { RedisUser } from "../define/redis";
 import { ERR } from "../shared/error/error";
-import { StreamChatData } from "@coze/api";
+import { ChatEventType, StreamChatData } from "@coze/api";
 import { CozeService } from "./cozeService";
 
 export class ChatService {
@@ -21,21 +21,35 @@ export class ChatService {
             return;
         }
 
-        let conversation: string;
         let stream: AsyncIterable<StreamChatData>;
         if (!call.msg.conversation) {//新会话
             stream = CozeService.createChatStream(call.msg.botType, call.msg.session.userId, call.msg.msg);
         } else {//继续会话
-            conversation = call.msg.conversation;
-            stream = CozeService.continueChatStream(call.msg.botType, call.msg.session.userId, conversation, call.msg.msg);
+            stream = CozeService.continueChatStream(call.msg.botType, call.msg.session.userId, call.msg.conversation, call.msg.msg);
         }
 
         for await (const part of stream) {
-            // if (part.event === ChatEventType.CONVERSATION_MESSAGE_DELTA) {
-            //     process.stdout.write(part.data.content); // Real-time response
-            // }
-
-            console.log('[PART]', part);
+            switch (part.event) {
+                case ChatEventType.CONVERSATION_MESSAGE_DELTA: {
+                    await call.conn.sendMsg('Answer', {
+                        conversation: part.data.conversation_id,
+                        msg: part.data.content,
+                    });
+                    break;
+                }
+                case ChatEventType.DONE: {
+                    await call.conn.sendMsg('Answer', {
+                        complete: true,
+                    });
+                    break;
+                }
+                case ChatEventType.ERROR: {
+                    await call.conn.sendMsg('Answer', {
+                        error: part.data.msg,
+                    });
+                    break;
+                }
+            }
         }
     }
 }

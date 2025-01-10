@@ -17,18 +17,20 @@ describe('ApiChat', () => {
     });
 
     let waitingResolve: (value: void | PromiseLike<void>) => void;
+    let answer = '';
     client.listenMsg('Answer', (msg) => {
         if (msg.err) {
-            console.error('[Answer]', msg.err);
+            console.error('[Answer ERROR]', msg.err);
             waitingResolve();
             return;
         }
 
         if (msg.complete) {
-            console.log('[Answer Complete]',);
+            console.log('[Answer Complete]', answer);
+            answer = '';
             waitingResolve();
         } else {
-            console.log('[Answer]', msg.msg);
+            answer += msg.msg;
         }
     });
 

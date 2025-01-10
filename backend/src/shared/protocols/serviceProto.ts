@@ -32,7 +32,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 7,
+    "version": 8,
     "services": [
         {
             "id": 6,
@@ -86,7 +86,8 @@ export const serviceProto: ServiceProto<ServiceType> = {
                     "name": "conversation",
                     "type": {
                         "type": "String"
-                    }
+                    },
+                    "optional": true
                 },
                 {
                     "id": 0,
