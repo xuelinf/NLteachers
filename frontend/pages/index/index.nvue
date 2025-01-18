@@ -28,7 +28,7 @@
 				<fui-button radius="80rpx" text="开始新聊天" @click="startChat"></fui-button>
 			</view>
 		</fui-empty>
-		<fui-fab zIndex="999" background="#246BFD" position="right" :fabs="fabs" @click="handleClick"></fui-fab>
+		<fui-fab zIndex="999" background="#246BFD" position="right" :fabs="fabs" @click="fabClick"></fui-fab>
 	</view>
 </template>
 
@@ -36,118 +36,155 @@
 	export default {
 		data() {
 			return {
-				list: [],
-				listData: [{
-					avatar: '/static/images/chat/avatar/img_avatar_1.png',
-					name: 'Aileen Fullbright',
-					msg: "Can't wait to try it out! 😍😍",
-					num: 1,
-					time: '20:00',
-					status: 1
-				}, {
-					avatar: '/static/images/chat/avatar/img_avatar_2.png',
-					name: '王小小',
-					msg: "迫不及待地想试试！ 😍😍",
-					num: 1,
-					time: '昨天',
-					status: 1
-				}, {
-					avatar: '/static/images/chat/avatar/img_avatar_3.png',
-					name: 'Freida Varnes',
-					msg: "Sky blue. Trying it now! 😂",
-					num: 0,
-					time: '昨天',
-					status: 0
-				}, {
-					avatar: '/static/images/chat/avatar/img_def_1.png',
-					name: 'Aileen Fullbright',
-					msg: "Wow, this is really epic 👍",
-					num: 0,
-					time: '前天 12:00',
-					status: 0
-				}, {
-					avatar: '/static/images/chat/avatar/img_def.png',
-					name: 'Aileen Fullbright',
-					msg: "Can't wait to try it out! 😍😍",
-					num: 1,
-					time: '20:00',
-					status: 1
-				}, {
-					avatar: '/static/images/chat/avatar/img_avatar_2.png',
-					name: '王小小',
-					msg: "迫不及待地想试试！ 😍😍",
-					num: 1,
-					time: '昨天',
-					status: 1
-				}, {
-					avatar: '/static/images/chat/avatar/img_avatar_3.png',
-					name: 'Freida Varnes',
-					msg: "Sky blue. Trying it now! 😂",
-					num: 0,
-					time: '昨天',
-					status: 0
-				}, {
-					avatar: '/static/images/chat/avatar/img_def_1.png',
-					name: 'Aileen Fullbright',
-					msg: "Wow, this is really epic 👍",
-					num: 0,
-					time: '前天 12:00',
-					status: 0
-				}, {
-					avatar: '/static/images/chat/avatar/img_def_1.png',
-					name: 'Aileen Fullbright',
-					msg: "Wow, this is really epic 👍",
-					num: 0,
-					time: '前天 12:00',
-					status: 0
-				}, {
-					avatar: '/static/images/chat/avatar/img_def_1.png',
-					name: 'Aileen Fullbright',
-					msg: "Wow, this is really epic 👍",
-					num: 0,
-					time: '前天 12:00',
-					status: 0
-				}],
+				list: [], // 聊天记录列表
 				fabs: [{
-					name: 'my',
-					text: '联系人'
+					name: 'home',
+					text: '返回主页'
 				}, {
-					name: 'community',
+					name: 'my',
 					text: '个人中心'
 				}, {
 					name: 'message',
-					text: '聊天'
+					text: '随便聊聊'
 				}]
 			}
 		},
-		onLoad() {
-
+		onShow() {
+			// 每次页面显示时加载聊天记录
+			this.loadChatHistory();
 		},
 		methods: {
-			onClick(e, index) {
-				console.log(e, index)
-				const item = this.list[index]
-				uni.fui.toast(`删除 ${item.name}`)
-			},
-			startChat() {
-				//此处应跳转至联系人页面，这里只做演示使用
-				this.list = [...this.listData]
-			},
-			chat(e) {
-				console.log(e)
-				uni.fui.href('../chat/chat')
-			},
-			handleClick(e) {
-				console.log(e)
-				const index = e.index
-				let url = '../chat/chat';
-				if (index === 0) {
-					url = '../contacts/contacts';
-				} else if (index === 1) {
-					url = '../my/my';
+			// 加载聊天记录
+			loadChatHistory() {
+				try {
+					const chatHistory = uni.getStorageSync('chatHistory') || [];
+					// 处理时间显示
+					this.list = chatHistory.map(item => ({
+						...item,
+						time: this.formatTime(item.timestamp),
+						msg: item.lastMessage,
+						name: `${item.agentName}老师`,
+						num: 0, // 未读消息数，可以根据需要设置
+						avatar: '/static/images/chat/avatar/img_avatar_2.png' // 使用统一的头像
+					}));
+				} catch (error) {
+					console.error('加载聊天记录失败:', error);
+					this.list = [];
 				}
-				uni.fui.href(url)
-			}
+			},
+
+			// 格式化时间显示
+			formatTime(timestamp) {
+				const now = Date.now();
+				const diff = now - timestamp;
+				const minute = 60 * 1000;
+				const hour = 60 * minute;
+				const day = 24 * hour;
+
+				if (diff < minute) {
+					return '刚刚';
+				} else if (diff < hour) {
+					return `${Math.floor(diff / minute)}分钟前`;
+				} else if (diff < day) {
+					return `${Math.floor(diff / hour)}小时前`;
+				} else if (diff < 2 * day) {
+					return '昨天';
+				} else if (diff < 3 * day) {
+					return '前天';
+				} else {
+					const date = new Date(timestamp);
+					return `${date.getMonth() + 1}-${date.getDate()}`;
+				}
+			},
+
+			onClick(e, index) {
+				// 删除聊天记录
+				try {
+					const chatHistory = uni.getStorageSync('chatHistory') || [];
+					const deletedItem = chatHistory[index];
+					
+					if (deletedItem) {
+						// 删除首页的聊天记录
+						chatHistory.splice(index, 1);
+						uni.setStorageSync('chatHistory', chatHistory);
+						this.list.splice(index, 1);
+						
+						// 删除详细的聊天记录
+						uni.removeStorageSync(`chatDetail_${deletedItem.agentId}`);
+						
+						uni.fui.toast('删除成功');
+					}
+				} catch (error) {
+					console.error('删除聊天记录失败:', error);
+					uni.fui.toast('删除失败');
+				}
+			},
+
+			chat(item) {
+				// 跳转到聊天页面，并传递智能体ID
+				uni.navigateTo({
+					url: `/pages/chat/chat?agent=${item.agentId}`,
+					success: () => {
+						// 将该记录移到列表顶部
+						const index = this.list.findIndex(i => i.agentId === item.agentId);
+						if (index > 0) {
+							const record = this.list.splice(index, 1)[0];
+							this.list.unshift(record);
+							
+							// 更新本地存储中的顺序
+							const chatHistory = uni.getStorageSync('chatHistory') || [];
+							const historyIndex = chatHistory.findIndex(i => i.agentId === item.agentId);
+							if (historyIndex > 0) {
+								const historyRecord = chatHistory.splice(historyIndex, 1)[0];
+								chatHistory.unshift(historyRecord);
+								uni.setStorageSync('chatHistory', chatHistory);
+							}
+						}
+					}
+				});
+			},
+
+			startChat() {
+				// 跳转到智能体选择页面
+				uni.navigateTo({
+					url: '/pages/agents/agents'
+				});
+			},
+
+			fabClick(e) {
+				const index = e.index;
+				switch (index) {
+					case 0: // 返回主页
+						uni.redirectTo({
+							url: '/pages/home/home'
+						});
+						break;
+					case 1: // 个人中心
+						uni.navigateTo({
+							url: '/pages/my/my'
+						});
+						break;
+					case 2: // 随便聊聊
+						// 从聊天记录中随机选择一个
+						if (this.list.length > 0) {
+							const randomIndex = Math.floor(Math.random() * this.list.length);
+							const randomChat = this.list[randomIndex];
+							uni.navigateTo({
+								url: `/pages/chat/chat?agent=${randomChat.agentId}`
+							});
+						} else {
+							// 如果没有聊天记录，提示用户
+							uni.fui.toast('暂无聊天记录，请先添加智能体');
+							// 跳转到智能体选择页面
+							setTimeout(() => {
+								uni.navigateTo({
+									url: '/pages/agents/agents'
+								});
+							}, 1500);
+						}
+						break;
+				}
+			},
 		}
 	}
 </script>

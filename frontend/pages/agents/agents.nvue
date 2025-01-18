@@ -20,7 +20,7 @@
 
 			<!-- 智能体列表 -->
 			<view class="agent-list">
-				<view class="agent-item" v-for="(agent, index) in filteredAgents" :key="index" @tap="navigateToChat(agent.id)">
+				<view class="agent-item" v-for="(agent, index) in filteredAgents" :key="index" @tap="chat(agent)">
 					<image class="agent-image" :src="agent.image" mode="widthFix"></image>
 				</view>
 			</view>
@@ -31,19 +31,19 @@
 
 		<!-- 底部导航栏 -->
 		<view class="tabbar">
-			<view class="tabbar-item" @tap="navigateToChat()">
+			<view class="tabbar-item" @tap="fabClick(0)">
 				<view class="tabbar-icon-box">
 					<fui-icon name="message" :size="48" :color="current === 0 ? '#465CFF' : '#333333'"></fui-icon>
 					<text class="tabbar-text" :class="{'tabbar-text-active': current === 0}">聊天</text>
 				</view>
 			</view>
-			<view class="tabbar-item" @tap="navigateToHome()">
+			<view class="tabbar-item" @tap="fabClick(1)">
 				<view class="tabbar-icon-box">
 					<fui-icon name="home" :size="48" :color="current === 1 ? '#465CFF' : '#333333'"></fui-icon>
 					<text class="tabbar-text" :class="{'tabbar-text-active': current === 1}">主页</text>
 				</view>
 			</view>
-			<view class="tabbar-item" @tap="navigateToMy()">
+			<view class="tabbar-item" @tap="fabClick(2)">
 				<view class="tabbar-icon-box">
 					<fui-icon name="my" :size="48" :color="current === 2 ? '#465CFF' : '#333333'"></fui-icon>
 					<text class="tabbar-text" :class="{'tabbar-text-active': current === 2}">我的</text>
@@ -154,21 +154,58 @@ export default {
 		onSearch(e) {
 			this.searchText = e.detail.value
 		},
-		navigateToChat(agentId) {
+		chat(item) {
+			// 检查是否存在聊天记录
+			const chatHistory = uni.getStorageSync('chatHistory') || [];
+			const existingChat = chatHistory.find(chat => chat.agentId === item.id);
+			
+			// 如果存在聊天记录，直接跳转到聊天页面
+			if (existingChat) {
+				uni.navigateTo({
+					url: `/pages/chat/chat?agent=${item.id}`
+				});
+				return;
+			}
+			
+			// 如果不存在聊天记录，先清除可能存在的详细记录，再跳转
+			try {
+				uni.removeStorageSync(`chatDetail_${item.id}`);
+			} catch (error) {
+				console.error('清除聊天记录失败:', error);
+			}
+			
 			uni.navigateTo({
-				url: `/pages/chat/chat?agent=${agentId}`
-			})
+				url: `/pages/chat/chat?agent=${item.id}`
+			});
 		},
-		navigateToHome() {
-			// 修改为 redirectTo 而不是 navigateBack
-			uni.redirectTo({
-				url: '/pages/home/home'
-			})
+		fabClick(index) {
+			switch (index) {
+				case 0: // 聊天记录
+					uni.redirectTo({
+						url: '/pages/index/index'
+					});
+					break;
+				case 1: // 主页
+					uni.redirectTo({
+						url: '/pages/home/home'
+					});
+					break;
+				case 2: // 个人中心
+					uni.navigateTo({
+						url: '/pages/my/my'
+					});
+					break;
+			}
 		},
 		navigateToMy() {
 			uni.navigateTo({
 				url: '/pages/my/my'
-			})
+			});
+		},
+		navigateToChat() {
+			uni.redirectTo({
+				url: '/pages/index/index'
+			});
 		}
 	}
 }
