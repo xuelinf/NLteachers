@@ -32,7 +32,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 11,
+    "version": 13,
     "services": [
         {
             "id": 6,
@@ -180,6 +180,42 @@ export const serviceProto: ServiceProto<ServiceType> = {
                 {
                     "id": 5,
                     "value": "7461251871794118692"
+                },
+                {
+                    "id": 6,
+                    "value": "7461261068716359695"
+                },
+                {
+                    "id": 7,
+                    "value": "7461283049553444916"
+                },
+                {
+                    "id": 8,
+                    "value": "7461283306433658906"
+                },
+                {
+                    "id": 9,
+                    "value": "7461283306433773594"
+                },
+                {
+                    "id": 10,
+                    "value": "7461291072040206345"
+                },
+                {
+                    "id": 11,
+                    "value": "7461284004411916322"
+                },
+                {
+                    "id": 12,
+                    "value": "7461283718603767834"
+                },
+                {
+                    "id": 13,
+                    "value": "7461285700701683766"
+                },
+                {
+                    "id": 14,
+                    "value": "7461283718603882522"
                 }
             ]
         },
