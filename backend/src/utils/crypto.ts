@@ -1,7 +1,6 @@
 import Sqids from 'sqids';
 import { Config } from '../config';
 import { xxh3 } from '@node-rs/xxhash';
-import { TextEncoder } from 'util';
 import base85 from '@thirdact/base85';
 import * as crypto from 'crypto';
 
