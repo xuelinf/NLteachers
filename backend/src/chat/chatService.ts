@@ -1,5 +1,5 @@
 import { MsgCall, WsServer } from "tsrpc";
-import { MsgQuistion } from "../shared/protocols/MsgQuistion";
+import { MsgQuestion } from "../shared/protocols/MsgQuestion";
 import { RedisUser } from "../define/redis";
 import { ERR } from "../shared/error/error";
 import { ChatEventType, StreamChatData } from "@coze/api";
@@ -7,14 +7,14 @@ import { CozeService } from "./cozeService";
 
 export class ChatService {
     static init(server: WsServer) {
-        const handler = server.listenMsg('Quistion', call => {
-            ChatService.onQuistion(call);
+        const handler = server.listenMsg('Question', call => {
+            console.log('MsgQuestion', call);
+            ChatService.onQuestion(call);
         });
     }
 
-    static async onQuistion(call: MsgCall<MsgQuistion>) {
+    static async onQuestion(call: MsgCall<MsgQuestion>) {
         const user = await RedisUser.Get(call.msg.session.userId);
-        console.log(user);
         if (!user || user.session !== call.msg.session.session) {
             await call.conn.sendMsg('Answer', {
                 err: ERR.SessionError,

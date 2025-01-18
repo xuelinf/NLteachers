@@ -4,7 +4,7 @@ export class Config {
         logger: console,
     };
 	static readonly tsrpcWsClientCfg = {
-	    server: 'http://122.51.33.33:1230',
+	    server: 'ws://122.51.33.33:1230',
 	    logger: console,
 	};
 }

@@ -39,16 +39,16 @@ describe('ApiChat', () => {
         console.log('Connect Result:', connRet);
     });
 
-    let quistion = '你好';
-    it(quistion, async () => {
+    let question = '你好';
+    it(question, async () => {
         const waitingPromise = new Promise<void>(resolve => {
             waitingResolve = resolve;
         });
 
-        const ret = await client.sendMsg('Quistion', {
+        const ret = await client.sendMsg('Question', {
             session,
             botType: BotType.小小画家,
-            msg: '深圳的高新园有一座字节跳动的大楼',
+            msg: '请介绍你的功能',
         });
 
         assert.strictEqual(ret.isSucc, true);

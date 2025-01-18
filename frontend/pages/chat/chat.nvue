@@ -2,8 +2,10 @@
 	<view class="fui-wrap">
 		<view class="fui-chat__list" :class="{'fui-chat__pbm':faceShow}">
 			<!-- 图片 -->
-			<view class="fui-chat__item" v-for="(message, index) in messageList" :key="index" :class="{'fui-item__right': message.isUser}">
-				<fui-avatar :src="message.isUser ? '/static/images/chat/avatar/img_avatar_1.png' : '/static/images/chat/avatar/img_avatar_2.png'"></fui-avatar>
+			<view class="fui-chat__item" v-for="(message, index) in messageList" :key="index"
+				:class="{'fui-item__right': message.isUser}">
+				<fui-avatar
+					:src="message.isUser ? '/static/images/chat/avatar/img_avatar_1.png' : '/static/images/chat/avatar/img_avatar_2.png'"></fui-avatar>
 				<view class="fui-content__box">
 					<text class="fui-content__text">{{message.content}}</text>
 				</view>
@@ -20,10 +22,10 @@
 
 		<!-- #ifdef APP-NVUE -->
 		<view class="fui-chatbar__fixed" :style="{transform: `translateY(${faceShow?0:translateY})px`}">
-			<!-- #endif -->
+		<!-- #endif -->
 			<!-- #ifndef APP-NVUE -->
 			<view class="fui-chatbar__fixed" :class="[faceShow?'fui-face__show':'fui-face__hidden']">
-				<!-- #endif -->
+			<!-- #endif -->
 				<view class="fui-chatbar__wrap">
 					<view class="fui-chatbar__icon-box" @tap="openPopup">
 						<fui-icon name="plussign"></fui-icon>
@@ -80,9 +82,22 @@
 </template>
 
 <script>
-	import { Config } from '../../src/config.ts';
+	import {
+		Define
+	} from '../../src/define/define';
+	import {
+		Config
+	} from '../../src/config.ts';
 	import faceList from './emoji.js'
-	import { WsClient } from 'tsrpc-miniapp'
+	import {
+		WsClient
+	} from 'tsrpc-miniapp'
+	import {
+		serviceProto
+	} from "../../src/shared/protocols/serviceProto";
+	import {
+		BotType
+	} from "../../src/shared/common/common";
 
 	export default {
 		data() {
@@ -135,12 +150,31 @@
 			this.loadDetailedChatHistory();
 			// 再获取智能体信息
 			this.fetchAgentInfo();
-			
-			this.client = new WsClient(Config.tsrpcWsClientCfg);
-			
-			this.client.
-			
+
+			this.session = uni.getStorageSync(Define.SessionStorageKey);
+			this.client = new WsClient(serviceProto, Config.tsrpcWsClientCfg);
+
+			this.client.listenMsg('Answer', (msg) => {
+				if (msg.err) {
+					console.error('[Answer ERROR]', msg.err);
+					return;
+				}
+
+				if (msg.complete) {
+					console.log('[Answer Complete]');
+					return;
+				}
+
+				console.log(msg.msg);
+			});
+
 			await this.client.connect();
+
+			await this.client.sendMsg('Question', {
+				session: this.session,
+				botType: BotType.知识点顺口溜,
+				msg: '请介绍你的功能',
+			});
 		},
 		watch: {
 			msg(newValue, oldValue) {
@@ -206,7 +240,7 @@
 			},
 			fetchAgentInfo() {
 				// 根据具体的智能体ID设置对应的身份和对话内容
-				switch(this.agentId) {
+				switch (this.agentId) {
 					// 陪伴智能体
 					case 'companion-1':
 						this.agentInfo.name = '开朗';
@@ -220,8 +254,8 @@
 						this.agentInfo.name = '贴心';
 						this.agentInfo.firstMessage = '嗨！我是贴心的陪伴老师，我会认真倾听你的每一句话。';
 						break;
-					
-					// 成长智能体
+
+						// 成长智能体
 					case 'growth-1':
 						this.agentInfo.name = '励志';
 						this.agentInfo.firstMessage = '你好！我是励志成长老师，让我们一起努力进步吧！';
@@ -235,7 +269,7 @@
 						this.agentInfo.firstMessage = '你好啊，我是创新成长老师，让我们一起探索新的可能性！';
 						break;
 
-					// 趣味智能体
+						// 趣味智能体
 					case 'fun-1':
 						this.agentInfo.name = '幽默';
 						this.agentInfo.firstMessage = '嘿！我是幽默趣味老师，准备好和我一起开心玩耍了吗？';
@@ -249,7 +283,7 @@
 						this.agentInfo.firstMessage = '你好！我是欢乐趣味老师，希望能带给你快乐的时光～';
 						break;
 
-					// 心灵智能体
+						// 心灵智能体
 					case 'heart-1':
 						this.agentInfo.name = '静心';
 						this.agentInfo.firstMessage = '你好，我是静心老师，让我们一起平静下来，聊聊心里的想法。';
@@ -279,7 +313,7 @@
 					timestamp: Date.now()
 				};
 				this.messageList.push(message);
-				
+
 				// 保存到详细聊天记录
 				this.saveDetailedChatHistory(message);
 				// 保存到首页聊天记录
@@ -347,11 +381,11 @@
 				try {
 					// 获取现有的详细聊天记录
 					let detailedHistory = [...this.detailedChatHistory];
-					
+
 					// 添加新消息
 					detailedHistory.push(message);
 					this.detailedChatHistory = detailedHistory;
-					
+
 					// 保存到本地存储
 					uni.setStorageSync(`chatDetail_${this.agentId}`, detailedHistory);
 				} catch (error) {
@@ -373,7 +407,7 @@
 							'Authorization': 'Bearer your_api_key' // 需要替换为实际的API密钥
 						}
 					});
-					
+
 					if (response.statusCode === 200) {
 						return response.data.reply;
 					} else {
@@ -387,21 +421,21 @@
 
 			async handleSend() {
 				if (!this.msg.trim()) return;
-				
+
 				const userMessage = this.msg.trim();
 				this.addMessage(userMessage, true); // 添加用户消息
 				this.msg = ''; // 清空输入框
 				this.isSend = false;
-				
+
 				// 显示加载状态
 				this.isLoading = true;
-				
+
 				// 发送到扣子API并获取回复
 				const reply = await this.sendToKouZiAPI(userMessage);
-				
+
 				// 隐藏加载状态
 				this.isLoading = false;
-				
+
 				// 添加智能体回复
 				this.addMessage(reply, false);
 			},
