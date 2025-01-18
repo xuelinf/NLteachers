@@ -199,36 +199,80 @@
 				// 监听服务器回复
 				this.client.listenMsg('Answer', (data) => {
 					console.log('Received answer:', data);
-					this.isLoading = false;
 					
-					if (data && data.msg) {
-						if (data.complete) {
-							// 如果是完成消息，将当前输入消息标记为完成
-							if (this.currentTypingMessage) {
-								this.currentTypingMessage.isTyping = false;
-								this.saveChatHistory(this.currentTypingMessage);
-								this.currentTypingMessage = null;
+					if (data.complete) {
+						// 收到完成消息，处理当前累积的消息内容
+						this.isLoading = false;
+						
+						if (this.currentTypingMessage) {
+							this.currentTypingMessage.isTyping = false;
+							
+							// 处理消息中的markdown图片
+							const content = this.currentTypingMessage.content;
+							const imgRegex = /!\[(.*?)\]\((.*?)\)/g;
+							let match;
+							let lastIndex = 0;
+							let processedContent = '';
+							
+							// 存储找到的图片信息
+							const images = [];
+							
+							// 处理文本中的markdown图片
+							while ((match = imgRegex.exec(content)) !== null) {
+								// 添加图片前的文本
+								processedContent += content.slice(lastIndex, match.index);
+								lastIndex = match.index + match[0].length;
+								
+								// 保存图片信息
+								images.push({
+									alt: match[1],
+									url: match[2]
+								});
 							}
 							
-							// 如果有会话ID，保存它
-							if (data.conversation) {
-								this.currentConversation = data.conversation;
-							}
-						} else {
-							// 如果没有正在输入的消息，创建一个新的
-							if (!this.currentTypingMessage) {
-								const botMessage = {
-									content: data.msg,
+							// 添加剩余的文本
+							processedContent += content.slice(lastIndex);
+							
+							// 更新当前消息的内容（移除markdown图片语法）
+							this.currentTypingMessage.content = processedContent;
+							this.saveChatHistory(this.currentTypingMessage);
+							
+							// 为每个图片创建新的消息
+							images.forEach(img => {
+								const imageMessage = {
+									content: img.url,
+									type: 'image',
 									isUser: false,
-									isTyping: true,
+									isTyping: false,
+									altText: img.alt,
 									timestamp: new Date().getTime()
 								};
-								this.messageList.push(botMessage);
-								this.currentTypingMessage = botMessage;
-							} else {
-								// 如果有正在输入的消息，追加内容
-								this.currentTypingMessage.content += data.msg;
-							}
+								this.messageList.push(imageMessage);
+								this.saveChatHistory(imageMessage);
+							});
+							
+							this.currentTypingMessage = null;
+						}
+						
+						// 如果有会话ID，保存它
+						if (data.conversation) {
+							this.currentConversation = data.conversation;
+						}
+					} else if (data.msg) {
+						// 收到消息片段
+						if (!this.currentTypingMessage) {
+							// 创建新的输入中消息
+							const botMessage = {
+								content: data.msg,
+								isUser: false,
+								isTyping: true,
+								timestamp: new Date().getTime()
+							};
+							this.messageList.push(botMessage);
+							this.currentTypingMessage = botMessage;
+						} else {
+							// 追加内容到当前消息
+							this.currentTypingMessage.content += data.msg;
 						}
 					}
 				});
@@ -832,18 +876,18 @@
 	}
 
 	.chat-image {
-		width: 400rpx;
+		max-width: 400rpx;
 		border-radius: 12rpx;
-		margin: 10rpx 0;
+		margin: 8rpx 0;
 	}
 	
 	.image-alt-text {
 		font-size: 24rpx;
 		color: #999;
 		margin-top: 4rpx;
-		padding: 0 10rpx;
 	}
-
+	
+	/* 图片预览样式 */
 	.image-preview-mask {
 		position: fixed;
 		top: 0;
@@ -851,14 +895,14 @@
 		right: 0;
 		bottom: 0;
 		background-color: rgba(0, 0, 0, 0.9);
-		z-index: 999;
 		display: flex;
 		align-items: center;
 		justify-content: center;
+		z-index: 999;
 	}
-
+	
 	.preview-image {
-		width: 750rpx;
-		height: 750rpx;
+		max-width: 100%;
+		max-height: 100%;
 	}
 </style>
