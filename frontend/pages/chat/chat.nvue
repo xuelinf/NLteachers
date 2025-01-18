@@ -562,11 +562,19 @@
 
 <style>
 	.fui-wrap {
-		padding-bottom: 108rpx;
+		padding-bottom: 180rpx;  /* 增加底部边距，确保最后一条消息不被输入框遮挡 */
 	}
 
 	.fui-chat__list {
-		padding: 32rpx 32rpx 0;
+		padding: 32rpx 32rpx 20rpx;  /* 增加底部内边距 */
+		flex: 1;
+		/* #ifndef APP-NVUE */
+		width: 100%;
+		/* #endif */
+	}
+
+	.fui-chat__pbm {
+		padding-bottom: 540rpx;  /* 表情面板展开时的底部边距 */
 	}
 
 	.fui-chat__item {
