@@ -79,13 +79,16 @@ const categoryConfig = {
 		banner: '/static/images/agents/growth/banner.png',
 		searchPlaceholder: '搜索成长机器人',
 		agents: [{
-			id: 'growth-1',
+			id: BotType.小小理财师,
+			name: '小小理财师',
 			image: '/static/images/agents/growth/agent-1.png'
 		}, {
-			id: 'growth-2',
+			id: BotType.安全知识闯关,
+			name: '安全知识闯关',
 			image: '/static/images/agents/growth/agent-2.png'
 		}, {
-			id: 'growth-3',
+			id: BotType.生活小妙招,
+			name: '生活小妙招',
 			image: '/static/images/agents/growth/agent-3.png'
 		}]
 	},
@@ -100,19 +103,26 @@ const categoryConfig = {
 			id: BotType.趣味科普站,
 			name: '趣味科普站',
 			image: '/static/images/agents/fun/agent-2.png'
+		}, {
+			id: BotType.故事大王,
+			name: '故事大王',
+			image: '/static/images/agents/fun/agent-3.png'
 		}]
 	},
 	heart: {
 		banner: '/static/images/agents/heart/banner.png',
 		searchPlaceholder: '搜索心灵机器人',
 		agents: [{
-			id: 'heart-1',
+			id: BotType.心事树洞,
+			name: '心事树洞',
 			image: '/static/images/agents/heart/agent-1.png'
 		}, {
-			id: 'heart-2',
+			id: BotType.友谊小顾问,
+			name: '友谊小顾问',
 			image: '/static/images/agents/heart/agent-2.png'
 		}, {
-			id: 'heart-3',
+			id: BotType.每日暖心信,
+			name: '每日暖心信',
 			image: '/static/images/agents/heart/agent-3.png'
 		}]
 	}
