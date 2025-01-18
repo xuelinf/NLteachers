@@ -1,4 +1,9 @@
 import Redis from 'ioredis';
-import { Config } from '../config';
+import { CheckRedisPrefix } from '../define/redis';
 
-export const redis = new Redis(Config.redis);
+export let redis: Redis;
+
+export async function InitRedis() {
+    CheckRedisPrefix();
+    redis = new Redis(process.env.REDIS_URL!);
+}

@@ -7,12 +7,6 @@ export class Config {
     static readonly mode: CommunicationMode = CommunicationMode.Binary;
 
     //Redis
-    static readonly redis = {
-        host: "122.51.33.33",
-        port: 6379,
-        password: "Echoo1124",
-        db: 0,
-    }
     static readonly redisUserLifetimeSec = 7 * 24 * 60 * 60;
 
     //加密

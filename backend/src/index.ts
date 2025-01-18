@@ -4,9 +4,9 @@ import { HttpServer, WsServer } from "tsrpc";
 import { serviceProto } from "./shared/protocols/serviceProto";
 import { Config } from "./config";
 import { CommunicationMode } from "./define/define";
-import { CheckRedisPrefix } from "./define/redis";
 import { ChatService } from "./chat/chatService";
 import { CozeService } from "./chat/cozeService";
+import { InitRedis } from "./utils/redis";
 
 // Create the Server
 const httpServer = new HttpServer(serviceProto, {
@@ -20,8 +20,9 @@ const wsServer = new WsServer(serviceProto, {
 
 // Initialize before server start
 async function init() {
-    CheckRedisPrefix();
     await process.loadEnvFile();
+
+    InitRedis();
     
     CozeService.init();
     ChatService.init(wsServer);

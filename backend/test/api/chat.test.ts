@@ -7,7 +7,7 @@ import { BotType } from "../../src/shared/common/common";
 // 1. EXECUTE `npm run dev` TO START A LOCAL DEV SERVER
 // 2. EXECUTE `npm test` TO START UNIT TEST
 
-const session = { userId: 'ZqzOpKMU', session: 'HqzyQTcFR1UriCzGAeMZB' };
+const session = { userId: 'KAyXuB5Q', session: 'mKuURSegrd4GTB2IUADOP' };
 //const session = { userId: 'ZqzOpKMU', session: 'HqzyQTcFR1UriCzGAeMZB' };
 
 describe('ApiChat', () => {
@@ -48,7 +48,7 @@ describe('ApiChat', () => {
         const ret = await client.sendMsg('Quistion', {
             session,
             botType: BotType.小小画家,
-            msg: '你好',
+            msg: '深圳的高新园有一座字节跳动的大楼',
         });
 
         assert.strictEqual(ret.isSucc, true);

@@ -14,6 +14,7 @@ export class ChatService {
 
     static async onQuistion(call: MsgCall<MsgQuistion>) {
         const user = await RedisUser.Get(call.msg.session.userId);
+        console.log(user);
         if (!user || user.session !== call.msg.session.session) {
             await call.conn.sendMsg('Answer', {
                 err: ERR.SessionError,
