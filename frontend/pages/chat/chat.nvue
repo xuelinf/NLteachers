@@ -237,6 +237,9 @@
 							this.currentTypingMessage.content = processedContent;
 							this.saveChatHistory(this.currentTypingMessage);
 							
+							// 保存机器人的完整回复消息
+							this.saveMessageRecord(processedContent, true);
+							
 							// 为每个图片创建新的消息
 							images.forEach(img => {
 								const imageMessage = {
@@ -253,11 +256,6 @@
 							
 							this.currentTypingMessage = null;
 						}
-						
-						// 如果有会话ID，保存它
-						if (data.conversation) {
-							this.currentConversation = data.conversation;
-						}
 					} else if (data.msg) {
 						// 收到消息片段
 						if (!this.currentTypingMessage) {
@@ -273,6 +271,11 @@
 						} else {
 							// 追加内容到当前消息
 							this.currentTypingMessage.content += data.msg;
+						}
+						
+						// 如果有会话ID，保存它
+						if (data.conversation) {
+							this.currentConversation = data.conversation;
 						}
 					}
 				});
@@ -479,6 +482,7 @@
 
 					// 保存回本地存储
 					uni.setStorageSync('chatHistory', chatHistory);
+					console.log('[HISTORY]',chatHistory);
 				} catch (error) {
 					console.error('保存聊天记录失败:', error);
 				}
@@ -555,6 +559,9 @@
 				};
 				this.messageList.push(userMessage);
 				this.saveChatHistory(userMessage);
+				
+				// 保存用户消息记录
+				this.saveMessageRecord(this.msg, false);
 
 				// 保存消息内容并清空输入框
 				const messageContent = this.msg;
@@ -605,6 +612,30 @@
 			closePreview() {
 				this.showImagePreview = false;
 				this.previewImageUrl = '';
+			},
+			// 新的聊天记录保存函数
+			saveMessageRecord(content, isBot) {
+				try {
+					// 获取现有记录
+					let messageRecords = uni.getStorageSync('messageRecords-'+this.currentBotType) || [];
+					
+					// 创建新的记录
+					const newRecord = {
+						botType: this.currentBotType,
+						isBot: isBot ? 1 : 0,
+						content: content,
+						conversationId: this.currentConversation || ''
+					};
+					
+					// 添加到记录列表
+					messageRecords.push(newRecord);
+					
+					// 保存回本地存储
+					uni.setStorageSync('messageRecords-'+this.currentBotType, messageRecords);
+					console.log('[MESSAGE RECORD]', messageRecords);
+				} catch (error) {
+					console.error('保存消息记录失败:', error);
+				}
 			},
 		},
 		async onUnload() {

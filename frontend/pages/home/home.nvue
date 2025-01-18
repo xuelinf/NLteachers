@@ -6,7 +6,7 @@
 		<!-- 内容区域 -->
 		<scroll-view class="content" scroll-y>
 			<!-- 顶部横幅 -->
-			<view class="banner">
+			<view class="banner" @tap="navigateToKnowus">
 				<image class="banner-image" src="/static/images/home-banner.png" mode="aspectFit"></image>
 			</view>
 
@@ -76,6 +76,11 @@ export default {
 			uni.navigateTo({
 				url: '/pages/my/my'
 			})
+		},
+		navigateToKnowus() {
+			uni.navigateTo({
+				url: '/pages/knowus/knowus'
+			});
 		}
 	}
 }

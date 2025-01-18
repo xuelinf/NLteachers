@@ -146,6 +146,15 @@
 			"navigationBarTitleText": "消息通知",
 			"enablePullDownRefresh": false
 		}
+	}, {
+		"path": "pages/knowus/knowus",
+		"style": {
+			"navigationStyle": "custom",
+			"enablePullDownRefresh": false,
+			"mp-alipay": {
+				"allowsBounceVertical": "YES"
+			}
+		}
 	}],
 	"easycom": {
 		"autoscan": true,
