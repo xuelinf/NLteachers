@@ -1,5 +1,5 @@
 {
   "dependencies": {
-    "tsrpc-browser": "^3.4.16"
+    "tsrpc-miniapp": "^3.4.16"
   }
 }

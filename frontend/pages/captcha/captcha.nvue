@@ -57,7 +57,7 @@
 					code: 0,
 				});
 				if (ret.isSucc) {
-					localStorage.setItem(Define.SessionStorageKey, JSON.stringify(ret.res.session))
+					uni.setStorageSync(Define.SessionStorageKey, ret.res.session)
 
 					// 无论是登录还是注册，验证成功后都跳转到home页面
 					uni.reLaunch({

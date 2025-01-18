@@ -47,7 +47,7 @@ describe('ApiChat', () => {
 
         const ret = await client.sendMsg('Quistion', {
             session,
-            botType: BotType.安全知识闯关,
+            botType: BotType.小小画家,
             msg: '你好',
         });
 

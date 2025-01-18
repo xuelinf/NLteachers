@@ -1,6 +1,5 @@
 import { CozeAPI, COZE_CN_BASE_URL, RoleType, StreamChatData } from '@coze/api';
 import { BotType } from '../shared/common/common';
-import { randomInt64 } from '../utils/crypto';
 
 export class CozeService {
     private static chatClient: CozeAPI;

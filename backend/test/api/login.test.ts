@@ -5,7 +5,7 @@ import { Config } from '../../src/config';
 import dayjs from 'dayjs';
 import { TextEncoder } from 'util';
 import { xxh3 } from '@node-rs/xxhash';
-import { encodeBase85 } from '@alttiri/base85';
+import base85 from '@thirdact/base85';
 
 // 1. EXECUTE `npm run dev` TO START A LOCAL DEV SERVER
 // 2. EXECUTE `npm test` TO START UNIT TEST
@@ -25,8 +25,7 @@ describe('ApiLogin', () => {
     const low64 = spasswordBinint & ((BigInt(1) << BigInt(64)) - BigInt(1));
     spasswordBuffer.writeBigUInt64BE(high64, 0);
     spasswordBuffer.writeBigUInt64BE(low64, 8);
-    const buf = new Uint8Array(spasswordBuffer.buffer);
-    const spassword = encodeBase85(buf);
+    const spassword = base85.encode(spasswordBuffer);
 
     it('LoginVoidUser', async () => {
         const ret = await client.callApi('Login', {

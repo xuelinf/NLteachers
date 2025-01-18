@@ -32,7 +32,7 @@ export interface ServiceType {
 }
 
 export const serviceProto: ServiceProto<ServiceType> = {
-    "version": 8,
+    "version": 9,
     "services": [
         {
             "id": 6,
@@ -166,12 +166,12 @@ export const serviceProto: ServiceProto<ServiceType> = {
             "type": "Enum",
             "members": [
                 {
-                    "id": 0,
-                    "value": "7457732463407284234"
+                    "id": 2,
+                    "value": "7461135499336581120"
                 },
                 {
-                    "id": 1,
-                    "value": "7457739616813072396"
+                    "id": 3,
+                    "value": "7461133675976409123"
                 }
             ]
         },

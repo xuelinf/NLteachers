@@ -3,10 +3,6 @@ import { HttpClient, TsrpcError } from 'tsrpc';
 import { serviceProto } from '../../src/shared/protocols/serviceProto';
 import { Config } from '../../src/config';
 import dayjs from 'dayjs';
-import * as crypto from 'crypto';
-import { TextEncoder } from 'util';
-import { xxh3 } from '@node-rs/xxhash';
-import { encodeBase85 } from '@alttiri/base85';
 
 // 1. EXECUTE `npm run dev` TO START A LOCAL DEV SERVER
 // 2. EXECUTE `npm test` TO START UNIT TEST
