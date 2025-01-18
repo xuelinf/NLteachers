@@ -33,6 +33,8 @@
 </template>
 
 <script>
+	import { BotType } from '@/src/shared/common/common';
+	
 	export default {
 		data() {
 			return {
@@ -56,21 +58,24 @@
 		methods: {
 			// 加载聊天记录
 			loadChatHistory() {
-				try {
-					const chatHistory = uni.getStorageSync('chatHistory') || [];
-					// 处理时间显示
-					this.list = chatHistory.map(item => ({
-						...item,
-						time: this.formatTime(item.timestamp),
-						msg: item.lastMessage,
-						name: `${item.agentName}老师`,
-						num: 0, // 未读消息数，可以根据需要设置
-						avatar: '/static/images/chat/avatar/img_avatar_2.png' // 使用统一的头像
-					}));
-				} catch (error) {
-					console.error('加载聊天记录失败:', error);
-					this.list = [];
+				for (const botType of BotType){
+					console.log(botType);
 				}
+				// try {
+				// 	const chatHistory = uni.getStorageSync('chatHistory') || [];
+				// 	// 处理时间显示
+				// 	this.list = chatHistory.map(item => ({
+				// 		...item,
+				// 		time: this.formatTime(item.timestamp),
+				// 		msg: item.lastMessage,
+				// 		name: `${item.agentName}老师`,
+				// 		num: 0, // 未读消息数，可以根据需要设置
+				// 		avatar: '/static/images/chat/avatar/img_avatar_2.png' // 使用统一的头像
+				// 	}));
+				// } catch (error) {
+				// 	console.error('加载聊天记录失败:', error);
+				// 	this.list = [];
+				// }
 			},
 
 			// 格式化时间显示

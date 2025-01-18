@@ -177,7 +177,7 @@
 			this.agentId = options.agent;
 			
 			// 先加载历史记录
-			await this.loadDetailedChatHistory();
+			await this.loadChatHistory();
 			
 			// 获取session
 			this.session = uni.getStorageSync(Define.SessionStorageKey);
@@ -235,10 +235,14 @@
 							
 							// 更新当前消息的内容（移除markdown图片语法）
 							this.currentTypingMessage.content = processedContent;
-							this.saveChatHistory(this.currentTypingMessage);
 							
 							// 保存机器人的完整回复消息
+							if (lastIndex>0){
+							this.saveMessageRecord(content.slice(0,lastIndex), true);
 							this.saveMessageRecord(processedContent, true);
+							}else{
+							this.saveMessageRecord(content, true);
+							}
 							
 							// 为每个图片创建新的消息
 							images.forEach(img => {
@@ -251,7 +255,6 @@
 									timestamp: new Date().getTime()
 								};
 								this.messageList.push(imageMessage);
-								this.saveChatHistory(imageMessage);
 							});
 							
 							this.currentTypingMessage = null;
@@ -289,20 +292,24 @@
 				return;
 			}
 			
-			// 重置conversation
-			this.currentConversation = null;
-
-			// 如果没有设置智能体类型，使用默认值
-			if (!this.currentBotType) {
-				this.currentBotType = BotType.小小画家;
+			if (this.messageList.length>0){
+				this.currentConversation = this.messageList[this.messageList.length-1].conversationId;
+			}else{
+				// 重置conversation
+				this.currentConversation = null;
+				
+				// 如果没有设置智能体类型，使用默认值
+				if (!this.currentBotType) {
+					this.currentBotType = BotType.小小画家;
+				}
+				
+				// 发送消息到服务器
+				await this.client.sendMsg('Question', {
+					session: this.session,
+					botType: this.currentBotType,
+					msg: '请介绍你的功能',
+				});
 			}
-			
-			// 发送消息到服务器
-			await this.client.sendMsg('Question', {
-				session: this.session,
-				botType: this.currentBotType,
-				msg: '请介绍你的功能',
-			});
 		},
 		watch: {
 			msg(newValue, oldValue) {
@@ -434,93 +441,93 @@
 					this.addMessage(this.agentInfo.firstMessage, false);
 				}
 			},
-			addMessage(content, isUser = false) {
-				const message = {
-					content,
-					isUser,
-					timestamp: Date.now()
-				};
-				this.messageList.push(message);
+			// addMessage(content, isUser = false) {
+			// 	const message = {
+			// 		content,
+			// 		isUser,
+			// 		timestamp: Date.now()
+			// 	};
+			// 	this.messageList.push(message);
 
-				// 保存到详细聊天记录
-				this.saveDetailedChatHistory(message);
-				// 保存到首页聊天记录
-				this.saveChatHistory(message);
-			},
+			// 	// 保存到详细聊天记录
+			// 	this.saveDetailedChatHistory(message);
+			// 	// 保存到首页聊天记录
+			// 	this.saveChatHistory(message);
+			// },
 
-			saveChatHistory(message) {
-				try {
-					// 构建聊天记录对象
-					const chatRecord = {
-						agentId: this.agentId,
-						agentName: this.agentInfo.name,
-						lastMessage: message.content,
-						timestamp: message.timestamp,
-						avatar: '/static/images/chat/avatar/img_avatar_2.png', // 使用与聊天页面相同的头像
-						status: 1 // 在线状态
-					};
+			// saveChatHistory(message) {
+			// 	try {
+			// 		// 构建聊天记录对象
+			// 		const chatRecord = {
+			// 			agentId: this.agentId,
+			// 			agentName: this.agentInfo.name,
+			// 			lastMessage: message.content,
+			// 			timestamp: message.timestamp,
+			// 			avatar: '/static/images/chat/avatar/img_avatar_2.png', // 使用与聊天页面相同的头像
+			// 			status: 1 // 在线状态
+			// 		};
 
-					// 从本地存储获取现有聊天记录
-					let chatHistory = uni.getStorageSync('chatHistory') || [];
-					if (!Array.isArray(chatHistory)) {
-						chatHistory = [];
-					}
+			// 		// 从本地存储获取现有聊天记录
+			// 		let chatHistory = uni.getStorageSync('chatHistory') || [];
+			// 		if (!Array.isArray(chatHistory)) {
+			// 			chatHistory = [];
+			// 		}
 
-					// 查找是否存在与该智能体的聊天记录
-					const existingIndex = chatHistory.findIndex(item => item.agentId === this.agentId);
-					if (existingIndex !== -1) {
-						// 更新现有记录
-						chatHistory[existingIndex] = {
-							...chatHistory[existingIndex],
-							lastMessage: message.content,
-							timestamp: message.timestamp
-						};
-					} else {
-						// 添加新记录
-						chatHistory.unshift(chatRecord);
-					}
+			// 		// 查找是否存在与该智能体的聊天记录
+			// 		const existingIndex = chatHistory.findIndex(item => item.agentId === this.agentId);
+			// 		if (existingIndex !== -1) {
+			// 			// 更新现有记录
+			// 			chatHistory[existingIndex] = {
+			// 				...chatHistory[existingIndex],
+			// 				lastMessage: message.content,
+			// 				timestamp: message.timestamp
+			// 			};
+			// 		} else {
+			// 			// 添加新记录
+			// 			chatHistory.unshift(chatRecord);
+			// 		}
 
-					// 保存回本地存储
-					uni.setStorageSync('chatHistory', chatHistory);
-					console.log('[HISTORY]',chatHistory);
-				} catch (error) {
-					console.error('保存聊天记录失败:', error);
-				}
-			},
+			// 		// 保存回本地存储
+			// 		uni.setStorageSync('chatHistory', chatHistory);
+			// 		console.log('[HISTORY]',chatHistory);
+			// 	} catch (error) {
+			// 		console.error('保存聊天记录失败:', error);
+			// 	}
+			// },
 
-			// 加载详细聊天记录
-			loadDetailedChatHistory() {
-				try {
-					// 获取该智能体的详细聊天记录
-					const detailedHistory = uni.getStorageSync(`chatDetail_${this.agentId}`) || [];
-					if (Array.isArray(detailedHistory)) {
-						// 将历史记录添加到消息列表
-						this.detailedChatHistory = detailedHistory;
-						detailedHistory.forEach(message => {
-							this.messageList.push(message);
-						});
-					}
-				} catch (error) {
-					console.error('加载详细聊天记录失败:', error);
-				}
-			},
+			// // 加载详细聊天记录
+			// loadDetailedChatHistory() {
+			// 	try {
+			// 		// 获取该智能体的详细聊天记录
+			// 		const detailedHistory = uni.getStorageSync(`chatDetail_${this.agentId}`) || [];
+			// 		if (Array.isArray(detailedHistory)) {
+			// 			// 将历史记录添加到消息列表
+			// 			this.detailedChatHistory = detailedHistory;
+			// 			detailedHistory.forEach(message => {
+			// 				this.messageList.push(message);
+			// 			});
+			// 		}
+			// 	} catch (error) {
+			// 		console.error('加载详细聊天记录失败:', error);
+			// 	}
+			// },
 
-			// 保存详细聊天记录
-			saveDetailedChatHistory(message) {
-				try {
-					// 获取现有的详细聊天记录
-					let detailedHistory = [...this.detailedChatHistory];
+			// // 保存详细聊天记录
+			// saveDetailedChatHistory(message) {
+			// 	try {
+			// 		// 获取现有的详细聊天记录
+			// 		let detailedHistory = [...this.detailedChatHistory];
 
-					// 添加新消息
-					detailedHistory.push(message);
-					this.detailedChatHistory = detailedHistory;
+			// 		// 添加新消息
+			// 		detailedHistory.push(message);
+			// 		this.detailedChatHistory = detailedHistory;
 
-					// 保存到本地存储
-					uni.setStorageSync(`chatDetail_${this.agentId}`, detailedHistory);
-				} catch (error) {
-					console.error('保存详细聊天记录失败:', error);
-				}
-			},
+			// 		// 保存到本地存储
+			// 		uni.setStorageSync(`chatDetail_${this.agentId}`, detailedHistory);
+			// 	} catch (error) {
+			// 		console.error('保存详细聊天记录失败:', error);
+			// 	}
+			// },
 
 			async sendToKouZiAPI(message) {
 				try {
@@ -558,7 +565,6 @@
 					timestamp: new Date().getTime()
 				};
 				this.messageList.push(userMessage);
-				this.saveChatHistory(userMessage);
 				
 				// 保存用户消息记录
 				this.saveMessageRecord(this.msg, false);
@@ -617,14 +623,15 @@
 			saveMessageRecord(content, isBot) {
 				try {
 					// 获取现有记录
-					let messageRecords = uni.getStorageSync('messageRecords-'+this.currentBotType) || [];
+					const messageRecords = uni.getStorageSync('messageRecords-'+this.currentBotType) || [];
 					
 					// 创建新的记录
 					const newRecord = {
 						botType: this.currentBotType,
 						isBot: isBot ? 1 : 0,
 						content: content,
-						conversationId: this.currentConversation || ''
+						conversationId: this.currentConversation || '',
+						timestamp:new Date().getTime(),
 					};
 					
 					// 添加到记录列表
@@ -637,6 +644,58 @@
 					console.error('保存消息记录失败:', error);
 				}
 			},
+			loadChatHistory(){
+				let messageRecords = uni.getStorageSync('messageRecords-'+this.currentBotType) || [];
+				for (const msg of messageRecords){
+					// 处理消息中的markdown图片
+					const content = msg.content;
+					const imgRegex = /!\[(.*?)\]\((.*?)\)/g;
+					let match;
+					let lastIndex = 0;
+					let processedContent = '';
+					
+					// 存储找到的图片信息
+					const images = [];
+					
+					// 处理文本中的markdown图片
+					while ((match = imgRegex.exec(content)) !== null) {
+						// 添加图片前的文本
+						processedContent += content.slice(lastIndex, match.index);
+						lastIndex = match.index + match[0].length;
+						
+						// 保存图片信息
+						images.push({
+							alt: match[1],
+							url: match[2]
+						});
+					}
+					
+					// 为每个图片创建新的消息
+					images.forEach(img => {
+						const imageMessage = {
+							content: img.url,
+							type: 'image',
+							isUser: false,
+							isTyping: false,
+							altText: img.alt,
+							timestamp: msg.timestamp
+						};
+						this.messageList.push(imageMessage);
+					});
+					
+					if (images.length > 0){
+						continue;
+					}
+					
+					const botMessage = {
+						content: msg.content,
+						isUser: !msg.isBot,
+						isTyping: false,
+						timestamp: msg.timestamp,
+					};
+					this.messageList.push(botMessage);
+				}
+			},
 		},
 		async onUnload() {
 			console.log('=== Chat Page onUnload ===');
@@ -645,7 +704,6 @@
 					// 关闭当前正在输入的消息（如果有）
 					if (this.currentTypingMessage) {
 						this.currentTypingMessage.isTyping = false;
-						this.saveChatHistory(this.currentTypingMessage);
 						this.currentTypingMessage = null;
 					}
 					
