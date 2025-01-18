@@ -100,6 +100,8 @@
 </template>
 
 <script>
+	import { BotType } from '@/src/shared/common/common';
+	import fuiButton from '@/components/firstui/fui-button/fui-button';
 	import {
 		Define
 	} from '../../src/define/define';
@@ -113,9 +115,6 @@
 	import {
 		serviceProto
 	} from "../../src/shared/protocols/serviceProto";
-	import {
-		BotType
-	} from "../../src/shared/common/common";
 
 	export default {
 		data() {
@@ -166,119 +165,86 @@
 				translateY: uni.upx2px(520),
 				showImagePreview: false, // 是否显示图片预览
 				previewImageUrl: '', // 预览图片的URL
+				session: ''
 			}
 		},
 		async onLoad(options) {
+			console.log('=== Chat Page onLoad ===');
+			
+			// 从 Storage 获取当前机器人类型
+			this.currentBotType = uni.getStorageSync('currentBotType');
+			
 			this.agentId = options.agent;
+			
 			// 先加载历史记录
-			this.loadDetailedChatHistory();
-			// 再获取智能体信息
-			this.fetchAgentInfo();
-
+			await this.loadDetailedChatHistory();
+			
+			// 获取session
 			this.session = uni.getStorageSync(Define.SessionStorageKey);
+			
+			// 初始化客户端连接
 			this.client = new WsClient(serviceProto, Config.tsrpcWsClientCfg);
-
-			this.client.listenMsg('Answer', (msg) => {
-				if (msg.err) {
-					console.error('[Answer ERROR]', msg.err);
-					return;
-				}
-
-				// 只有当botType匹配时才保存conversation ID
-				if (msg.conversation && msg.botType === this.currentBotType) {
-					this.currentConversation = msg.conversation;
-				}
-
-				// 如果消息完成，处理完整消息
-				if (msg.complete) {
-					console.log('[Answer Complete]');
+			
+			// 连接到服务器
+			try {
+				await this.client.connect();
+				console.log('Connected to server with bot type:', this.currentBotType);
+				
+				// 监听服务器回复
+				this.client.listenMsg('Answer', (data) => {
+					console.log('Received answer:', data);
+					this.isLoading = false;
 					
-					if (this.currentTypingMessage) {
-						this.currentTypingMessage.isTyping = false;
-						
-						// 处理完整消息中的图片
-						const fullMessage = this.currentTypingMessage.content;
-						console.log('Processing full message:', fullMessage);
-						
-						// 使用正则表达式匹配所有图片
-						const imageRegex = /!\[([^\]]*)\]\(([^)]+)\)/g;
-						let match;
-						let lastIndex = 0;
-						let newContent = '';
-						
-						// 遍历所有匹配的图片
-						while ((match = imageRegex.exec(fullMessage)) !== null) {
-							console.log('Found image match:', match);
-							
-							// 添加图片前的文本
-							const textBefore = fullMessage.slice(lastIndex, match.index).trim();
-							if (textBefore) {
-								this.messageList.push({
-									content: textBefore,
-									isUser: false,
-									type: 'text',
-									timestamp: new Date().getTime()
-								});
+					if (data && data.msg) {
+						if (data.complete) {
+							// 如果是完成消息，将当前输入消息标记为完成
+							if (this.currentTypingMessage) {
+								this.currentTypingMessage.isTyping = false;
+								this.saveChatHistory(this.currentTypingMessage);
+								this.currentTypingMessage = null;
 							}
 							
-							// 添加图片消息
-							const [fullMatch, altText, imageUrl] = match;
-							this.messageList.push({
-								content: imageUrl,
-								altText: altText,
-								isUser: false,
-								type: 'image',
-								timestamp: new Date().getTime()
-							});
-							
-							lastIndex = match.index + fullMatch.length;
-						}
-						
-						// 添加最后剩余的文本
-						const remainingText = fullMessage.slice(lastIndex).trim();
-						if (remainingText) {
-							this.messageList.push({
-								content: remainingText,
-								isUser: false,
-								type: 'text',
-								timestamp: new Date().getTime()
-							});
-						}
-						
-						// 移除原始消息
-						const index = this.messageList.indexOf(this.currentTypingMessage);
-						if (index > -1) {
-							this.messageList.splice(index, 1);
+							// 如果有会话ID，保存它
+							if (data.conversation) {
+								this.currentConversation = data.conversation;
+							}
+						} else {
+							// 如果没有正在输入的消息，创建一个新的
+							if (!this.currentTypingMessage) {
+								const botMessage = {
+									content: data.msg,
+									isUser: false,
+									isTyping: true,
+									timestamp: new Date().getTime()
+								};
+								this.messageList.push(botMessage);
+								this.currentTypingMessage = botMessage;
+							} else {
+								// 如果有正在输入的消息，追加内容
+								this.currentTypingMessage.content += data.msg;
+							}
 						}
 					}
-					
-					this.isLoading = false;
-					this.currentTypingMessage = null;
-					return;
-				}
-
-				// 处理正在输入的消息
-				if (!this.currentTypingMessage) {
-					this.currentTypingMessage = {
-						content: msg.msg,
-						isUser: false,
-						type: 'text',
-						isTyping: true,
-						timestamp: new Date().getTime()
-					};
-					this.messageList.push(this.currentTypingMessage);
-				} else {
-					this.currentTypingMessage.content += msg.msg;
-				}
-			});
-
-			await this.client.connect();
-
-			// 设置当前智能体类型
-			this.currentBotType = BotType.小小画家;
+				});
+				
+			} catch (error) {
+				console.error('Failed to connect:', error);
+				uni.showToast({
+					title: '连接服务器失败',
+					icon: 'none'
+				});
+				return;
+			}
+			
 			// 重置conversation
 			this.currentConversation = null;
 
+			// 如果没有设置智能体类型，使用默认值
+			if (!this.currentBotType) {
+				this.currentBotType = BotType.小小画家;
+			}
+			
+			// 发送消息到服务器
 			await this.client.sendMsg('Question', {
 				session: this.session,
 				botType: this.currentBotType,
@@ -352,58 +318,58 @@
 				switch (this.agentId) {
 					// 陪伴智能体
 					case 'companion-1':
-						this.agentInfo.name = '开朗';
-						this.agentInfo.firstMessage = '很高兴见到你！我是一个性格开朗的陪伴老师，我会用积极的态度和你聊天。';
+						this.agentInfo.name = '知识点顺口溜';
+						this.agentInfo.firstMessage = '很高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
 						break;
 					case 'companion-2':
-						this.agentInfo.name = '温柔';
-						this.agentInfo.firstMessage = '你好啊，我是温柔的陪伴老师，希望能给你带来温暖的陪伴。';
+						this.agentInfo.name = '历史说书人';
+						this.agentInfo.firstMessage = '高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
 						break;
 					case 'companion-3':
-						this.agentInfo.name = '贴心';
-						this.agentInfo.firstMessage = '嗨！我是贴心的陪伴老师，我会认真倾听你的每一句话。';
+						this.agentInfo.name = '英语对话伙伴';
+						this.agentInfo.firstMessage = '高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
 						break;
 
 						// 成长智能体
 					case 'growth-1':
 						this.agentInfo.name = '励志';
-						this.agentInfo.firstMessage = '你好！我是励志成长老师，让我们一起努力进步吧！';
+						this.agentInfo.firstMessage = '高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
 						break;
 					case 'growth-2':
 						this.agentInfo.name = '智慧';
-						this.agentInfo.firstMessage = '很高兴见到你，我是智慧成长老师，我会帮助你学习和思考。';
+						this.agentInfo.firstMessage = '高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
 						break;
 					case 'growth-3':
 						this.agentInfo.name = '创新';
-						this.agentInfo.firstMessage = '你好啊，我是创新成长老师，让我们一起探索新的可能性！';
+						this.agentInfo.firstMessage = '高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
 						break;
 
 						// 趣味智能体
 					case 'fun-1':
 						this.agentInfo.name = '幽默';
-						this.agentInfo.firstMessage = '嘿！我是幽默趣味老师，准备好和我一起开心玩耍了吗？';
+						this.agentInfo.firstMessage = '高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
 						break;
 					case 'fun-2':
 						this.agentInfo.name = '活力';
-						this.agentInfo.firstMessage = '哈喽！我是活力趣味老师，让我们一起玩些有趣的游戏吧！';
+						this.agentInfo.firstMessage = '高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
 						break;
 					case 'fun-3':
 						this.agentInfo.name = '欢乐';
-						this.agentInfo.firstMessage = '你好！我是欢乐趣味老师，希望能带给你快乐的时光～';
+						this.agentInfo.firstMessage = '高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
 						break;
 
 						// 心灵智能体
 					case 'heart-1':
 						this.agentInfo.name = '静心';
-						this.agentInfo.firstMessage = '你好，我是静心老师，让我们一起平静下来，聊聊心里的想法。';
+						this.agentInfo.firstMessage = '高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
 						break;
 					case 'heart-2':
 						this.agentInfo.name = '悦心';
-						this.agentInfo.firstMessage = '很高兴见到你，我是悦心老师，希望能帮你找到内心的快乐。';
+						this.agentInfo.firstMessage = '高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
 						break;
 					case 'heart-3':
 						this.agentInfo.name = '知心';
-						this.agentInfo.firstMessage = '你好啊，我是知心老师，有什么想和我分享的吗？';
+						this.agentInfo.firstMessage = '	你好啊，我是知心老师，有什么想和我分享的吗？';
 						break;
 
 					default:
@@ -555,10 +521,16 @@
 						// 只有当存在conversation且botType没有改变时才发送conversation
 						conversation: this.currentConversation
 					});
+					
+					// 确保之前的消息已完成
+					if (this.currentTypingMessage) {
+						this.currentTypingMessage.isTyping = false;
+						this.currentTypingMessage = null;
+					}
+					
 				} catch (error) {
 					console.error('发送消息失败:', error);
 					this.isLoading = false;
-					// 可以在这里添加错误提示
 					uni.showToast({
 						title: '发送失败，请重试',
 						icon: 'none'
@@ -594,131 +566,58 @@
 	}
 
 	.fui-chat__list {
-		/* #ifndef APP-NVUE */
-		width: 100%;
-		white-space: pre-wrap;
-		word-break: break-all;
-		/* #endif */
-		padding-top: 48rpx;
-	}
-
-	.fui-chat__pbm {
-		padding-bottom: 540rpx;
+		padding: 32rpx 32rpx 0;
 	}
 
 	.fui-chat__item {
-		/* #ifndef APP-NVUE */
-		width: 100%;
 		display: flex;
-		box-sizing: border-box;
-		/* #endif */
-		/* #ifdef APP-NVUE */
-		width: 750rpx;
-		/* #endif */
-		padding-left: 24rpx;
-		padding-right: 120rpx;
-		margin-bottom: 48rpx;
-		flex-direction: row;
-		overflow: hidden;
+		align-items: flex-start;
+		margin-bottom: 32rpx;
+		padding: 0 20rpx;
+	}
+
+	.fui-item__right {
+		flex-direction: row-reverse;
 	}
 
 	.fui-content__box {
-		flex: 1;
-		margin-left: 24rpx;
-		/* #ifndef APP-NVUE */
-		display: flex;
-		word-break: break-all;
-		white-space: pre-wrap;
-		/* #endif */
-		flex-direction: row;
-		align-items: center;
-
+		max-width: 480rpx;
+		margin-left: 20rpx;
+		margin-right: 20rpx;
 	}
 
 	.fui-content__text {
 		font-size: 32rpx;
-		color: #212121;
-		/* #ifndef APP-NVUE */
-		white-space: pre-wrap;
+		padding: 18rpx 24rpx;
+		border-radius: 20rpx;
 		word-break: break-all;
-		box-sizing: border-box;
-		/* #endif */
-		padding: 20rpx 24rpx;
-		background-color: #f8f8f8;
-		border-radius: 8rpx 32rpx 32rpx 32rpx;
-		/* #ifdef APP-NVUE */
-		/* #ifdef VUE2 */
-		max-width: 486rpx;
-		/* #endif */
-		/* #endif */
-	}
-
-	.fui-item__right {
-		padding-left: 120rpx;
-		padding-right: 24rpx;
-		flex-direction: row-reverse;
-	}
-
-	.fui-item__right .fui-content__box {
-		margin-left: 0;
-		margin-right: 24rpx;
-		flex-direction: row-reverse;
+		background: #f1f1f1;
+		color: #333;
 	}
 
 	.fui-item__right .fui-content__text {
-		border-radius: 32rpx 8rpx 32rpx 32rpx;
-		background-color: #246BFD;
+		background: #007AFF;
 		color: #fff;
 	}
-
-	.fui-chat__img {
-		width: 160rpx;
-		height: 160rpx;
-		/* #ifndef APP-NVUE */
-		display: block;
-		/* #endif */
+	
+	/* 添加打字机效果的样式 */
+	.typing {
+		border-right: 2px solid #666;
+		animation: cursor-blink 0.8s infinite;
 	}
-
-	.fui-audio__box {
-		/* #ifndef APP-NVUE */
-		display: flex;
-		/* #endif */
-		flex-direction: row;
-		align-items: center;
-		height: 80rpx;
-		border-radius: 40rpx;
-		background: rgba(36, 107, 253, 0.08);
-		padding: 0 48rpx 0 32rpx;
-	}
-
-	.fui-icon__audio {
-		width: 32rpx;
-		height: 32rpx;
-	}
-
-	.fui-time {
-		font-size: 24rpx;
-		line-height: 24rpx;
-		padding-left: 16rpx;
-		color: #246BFD;
-	}
-
-	.fui-op__icon {
-		/* #ifndef APP-NVUE */
-		flex-shrink: 0;
-		/* #endif */
-		padding-left: 12rpx;
-	}
-
-	.fui-item__right .fui-op__icon {
-		padding-right: 12rpx;
+	
+	@keyframes cursor-blink {
+		0%, 100% {
+			border-right-color: transparent;
+		}
+		50% {
+			border-right-color: #666;
+		}
 	}
 
 	.fui-chatbar__wrap {
-		/* #ifndef APP-NVUE */
 		width: 100%;
 		display: flex;
-		/* #endif */
 		padding: 6px 0;
 		flex-direction: row;
 		align-items: flex-end;
@@ -727,34 +626,19 @@
 	}
 
 	.fui-chatbar__input-box {
-		/* #ifndef APP-NVUE */
 		width: 100%;
 		display: flex;
-		/* #endif */
 		flex-direction: row;
 		flex: 1;
 		position: relative;
 	}
 
 	.fui-chatbar__input {
-		/* #ifndef APP-NVUE || MP-ALIPAY || MP-QQ */
 		width: 100%;
 		min-height: 32rpx;
 		box-sizing: content-box;
 		padding: 20rpx;
-		/* #endif */
-		/* #ifdef MP-ALIPAY || MP-QQ */
-		line-height: 1;
-		min-height: 72rpx;
-		/* #endif */
 		flex: 1;
-		/* #ifdef APP-NVUE */
-		/* #ifdef VUE2 */
-		min-height: 72rpx;
-		/* #endif */
-		height: 72rpx;
-		padding: 16rpx 20rpx;
-		/* #endif */
 		border-radius: 8rpx;
 		font-size: 32rpx;
 		background: #fff;
@@ -769,15 +653,10 @@
 		background: #fff;
 		border-radius: 8rpx;
 		text-align: center;
-		/* #ifndef APP-NVUE */
 		display: flex;
 		z-index: 10;
-		/* #endif */
 		align-items: center;
 		justify-content: center;
-		/* #ifdef H5 */
-		cursor: pointer;
-		/* #endif */
 	}
 
 	.fui-chatbar__voice:active {
@@ -793,14 +672,9 @@
 	.fui-chatbar__icon-box {
 		height: 72rpx;
 		padding: 0 16rpx;
-		/* #ifndef APP-NVUE */
 		display: flex;
-		/* #endif */
 		align-items: center;
 		justify-content: center;
-		/* #ifdef H5 */
-		cursor: pointer;
-		/* #endif */
 	}
 
 	.fui-chatbar__icon-box:active {
@@ -822,75 +696,46 @@
 		left: 0;
 		right: 0;
 		bottom: 0;
-		/* #ifndef APP-NVUE */
 		z-index: 10;
 		transition: all 0.2s ease-in-out;
-		/* #endif */
 		background-color: #f8f8f8;
-		/* #ifdef APP-NVUE */
-		transition-property: transform;
-		transition-duration: 0.2s;
-		/* #endif */
 	}
 
-	/* vue3 rpx 不能自动转换？ */
 	.fui-face__hidden {
-		/* #ifndef APP-NVUE */
 		transform: translate3d(0, 520rpx, 0);
-		/* #endif */
 	}
-
 
 	.fui-face__show {
-		/* #ifndef APP-NVUE */
 		transform: translate3d(0, 0, 0);
-		/* #endif */
-
-		/* #ifdef APP-NVUE */
-		transform: translateY(0);
-		/* #endif */
 	}
-
 
 	.fui-scroll__box {
 		position: relative;
 	}
 
 	.fui-face__box {
-		/* #ifndef APP-NVUE */
 		width: 100%;
-		/* #endif */
-		/* #ifdef APP-NVUE */
-		width: 750rpx;
-		/* #endif */
 		height: 520rpx;
 		background-color: #f8f8f8;
 	}
 
 	.fui-face__inner {
-		/* #ifndef APP-NVUE */
 		width: 100%;
 		display: flex;
 		box-sizing: border-box;
-		/* #endif */
 		flex-direction: row;
 		flex-wrap: wrap;
 		padding: 32rpx 2rpx;
 	}
 
 	.fui-face__text {
-		/* #ifndef APP-NVUE */
 		display: flex;
-		/* #endif */
 		width: 106rpx;
 		font-size: 60rpx;
 		padding: 16rpx 0;
 		text-align: center;
 		justify-content: center;
 		align-items: center;
-		/* #ifdef H5 */
-		cursor: pointer;
-		/* #endif */
 	}
 
 	.fui-del__box {
@@ -901,9 +746,7 @@
 		height: 72rpx;
 		background-color: #fff;
 		border-radius: 16rpx;
-		/* #ifndef APP-NVUE */
 		display: flex;
-		/* #endif */
 		align-items: center;
 		justify-content: center;
 	}
@@ -913,13 +756,8 @@
 	}
 
 	.fui-custom__wrap {
-		/* #ifndef APP-NVUE */
 		width: 100%;
 		display: flex;
-		/* #endif */
-		/* #ifdef APP-NVUE */
-		width: 750rpx;
-		/* #endif */
 		height: 520rpx;
 		flex-direction: row;
 		position: relative;
@@ -933,11 +771,9 @@
 
 	.fui-op__list {
 		flex: 1;
-		/* #ifndef APP-NVUE */
 		width: 100%;
 		display: flex;
 		box-sizing: border-box;
-		/* #endif */
 		flex-direction: row;
 		flex-wrap: wrap;
 		padding: 100rpx 44rpx 0;
@@ -945,9 +781,7 @@
 
 	.fui-op__item {
 		width: 220rpx;
-		/* #ifndef APP-NVUE */
 		display: flex;
-		/* #endif */
 		align-items: center;
 		justify-content: center;
 		margin-bottom: 32rpx;
@@ -961,20 +795,6 @@
 	.fui-op--text {
 		font-size: 28rpx;
 		padding-top: 12rpx;
-	}
-
-	.typing {
-		border-right: 2px solid #000;
-		animation: cursor-blink 0.8s infinite;
-	}
-
-	@keyframes cursor-blink {
-		0%, 100% {
-			border-right-color: transparent;
-		}
-		50% {
-			border-right-color: #000;
-		}
 	}
 
 	.chat-image {

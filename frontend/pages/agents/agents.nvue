@@ -54,19 +54,24 @@
 </template>
 
 <script>
+import { BotType } from '@/src/shared/common/common'
+
 // 定义每个分类的配置信息
 const categoryConfig = {
 	companion: {
 		banner: '/static/images/agents/companion/banner.png',
 		searchPlaceholder: '搜索陪伴机器人',
 		agents: [{
-			id: 'companion-1',
+			id: BotType.知识点顺口溜,
+			name: '知识点顺口溜',
 			image: '/static/images/agents/companion/agent-1.png'
 		}, {
-			id: 'companion-2',
+			id: BotType.历史说书人,
+			name: '历史说书人',
 			image: '/static/images/agents/companion/agent-2.png'
 		}, {
-			id: 'companion-3',
+			id: BotType.英语对话伙伴,
+			name: '英语对话伙伴',
 			image: '/static/images/agents/companion/agent-3.png'
 		}]
 	},
@@ -88,14 +93,13 @@ const categoryConfig = {
 		banner: '/static/images/agents/fun/banner.png',
 		searchPlaceholder: '搜索趣味机器人',
 		agents: [{
-			id: 'fun-1',
+			id: BotType.小小画家,
+			name: '小小画家',
 			image: '/static/images/agents/fun/agent-1.png'
 		}, {
-			id: 'fun-2',
+			id: BotType.趣味科普站,
+			name: '趣味科普站',
 			image: '/static/images/agents/fun/agent-2.png'
-		}, {
-			id: 'fun-3',
-			image: '/static/images/agents/fun/agent-3.png'
 		}]
 	},
 	heart: {
@@ -133,7 +137,7 @@ export default {
 			if (!this.searchText) return this.categoryInfo.agents
 			const searchText = this.searchText.toLowerCase()
 			return this.categoryInfo.agents.filter(agent => 
-				agent.id.toLowerCase().includes(searchText)
+				agent.name.toLowerCase().includes(searchText)
 			)
 		}
 	},
@@ -155,6 +159,10 @@ export default {
 			this.searchText = e.detail.value
 		},
 		chat(item) {
+			// 使用 Storage 存储当前机器人类型
+			uni.setStorageSync('currentBotType', item.id);
+			console.log('Set storage currentBotType to:', item.id);
+			
 			// 检查是否存在聊天记录
 			const chatHistory = uni.getStorageSync('chatHistory') || [];
 			const existingChat = chatHistory.find(chat => chat.agentId === item.id);
@@ -162,7 +170,7 @@ export default {
 			// 如果存在聊天记录，直接跳转到聊天页面
 			if (existingChat) {
 				uni.navigateTo({
-					url: `/pages/chat/chat?agent=${item.id}`
+					url: '/pages/chat/chat'
 				});
 				return;
 			}
@@ -175,7 +183,7 @@ export default {
 			}
 			
 			uni.navigateTo({
-				url: `/pages/chat/chat?agent=${item.id}`
+				url: '/pages/chat/chat'
 			});
 		},
 		fabClick(index) {
@@ -205,6 +213,12 @@ export default {
 		navigateToChat() {
 			uni.redirectTo({
 				url: '/pages/index/index'
+			});
+		},
+		handleAgentClick(agentId) {
+			// 跳转到聊天页面并传递智能体ID
+			uni.navigateTo({
+				url: `/pages/chat/chat?botType=${agentId}`
 			});
 		}
 	}
