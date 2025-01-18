@@ -182,7 +182,13 @@
 			// 获取session
 			this.session = uni.getStorageSync(Define.SessionStorageKey);
 			
-			// 初始化客户端连接
+			// 如果已存在client连接，先关闭它
+			if (this.client) {
+				await this.client.disconnect();
+				this.client = null;
+			}
+			
+			// 初始化新的客户端连接
 			this.client = new WsClient(serviceProto, Config.tsrpcWsClientCfg);
 			
 			// 连接到服务器
@@ -556,7 +562,27 @@
 				this.showImagePreview = false;
 				this.previewImageUrl = '';
 			},
-		}
+		},
+		async onUnload() {
+			console.log('=== Chat Page onUnload ===');
+			if (this.client) {
+				try {
+					// 关闭当前正在输入的消息（如果有）
+					if (this.currentTypingMessage) {
+						this.currentTypingMessage.isTyping = false;
+						this.saveChatHistory(this.currentTypingMessage);
+						this.currentTypingMessage = null;
+					}
+					
+					// 关闭socket连接
+					await this.client.disconnect();
+					this.client = null;
+					console.log('Socket connection closed successfully');
+				} catch (error) {
+					console.error('Error closing socket connection:', error);
+				}
+			}
+		},
 	}
 </script>
 
