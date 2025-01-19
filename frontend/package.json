@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "tsrpc-miniapp": "^3.4.16"
+  }
+}

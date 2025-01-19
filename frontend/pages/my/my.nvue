@@ -1,0 +1,157 @@
+<template>
+	<view>
+		<image class="banner" src="/static/images/my/img_banner_3x.png" mode="widthFix"></image>
+		<view class="user-info">
+			<image class="avatar" src="/static/images/common/logo.png"></image>
+			<view class="user-detail">
+				<text class="name">TestUser</text>
+				<text class="id">ID：10001</text>
+			</view>
+		</view>
+		<view class="menu-list">
+			<view v-for="(item,index) in menuItems" 
+				:key="index"
+				class="menu-item"
+				@click="handleMenuClick(index)">
+				<view class="menu-icon" :style="{backgroundColor:item.background}">
+					<image :src="'/static/images/my/' + item.img + '.png'" class="icon"></image>
+				</view>
+				<text class="menu-title">{{item.title}}</text>
+				<text class="arrow">></text>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				menuItems: [{
+					img: 'user',
+					title: '个人信息',
+					background: 'rgba(234,244,255,.5)'
+				}, {
+					img: 'userlist',
+					title: '我的好友',
+					background: 'rgba(227,255,243,.5)'
+				}, {
+					img: 'notification',
+					title: '消息通知',
+					background: 'rgba(255,241,219,.5)'
+				}, {
+					img: 'logout',
+					title: '退出登录',
+					background: 'rgba(255,227,219,.5)'
+				}]
+			}
+		},
+		methods: {
+			handleMenuClick(index) {
+				const routes = [
+					'../profile/profile',
+					'../contacts/contacts',
+					'../notice/notice'
+				];
+				
+				if (index < routes.length) {
+					uni.navigateTo({
+						url: routes[index]
+					});
+				} else {
+					uni.showModal({
+						title: '提示',
+						content: '确定要退出登录吗？',
+						success: (res) => {
+							if (res.confirm) {
+								uni.reLaunch({
+									url: '/pages/login/login'
+								});
+							}
+						}
+					});
+				}
+			}
+		}
+	}
+</script>
+
+<style>
+	.banner {
+		width: 750rpx;
+		height: 336rpx;
+	}
+	
+	.user-info {
+		position: absolute;
+		top: 128rpx;
+		left: 64rpx;
+		flex-direction: row;
+		align-items: center;
+	}
+	
+	.avatar {
+		width: 128rpx;
+		height: 128rpx;
+		border-radius: 64rpx;
+	}
+	
+	.user-detail {
+		margin-left: 32rpx;
+	}
+	
+	.name {
+		font-size: 36rpx;
+		color: #FFFFFF;
+		font-weight: bold;
+	}
+	
+	.id {
+		font-size: 28rpx;
+		color: #FFFFFF;
+		margin-top: 8rpx;
+	}
+	
+	.menu-list {
+		margin-top: -48rpx;
+		margin-left: 32rpx;
+		margin-right: 32rpx;
+		border-radius: 24rpx;
+		background-color: #FFFFFF;
+		padding: 32rpx;
+	}
+	
+	.menu-item {
+		flex-direction: row;
+		align-items: center;
+		padding: 24rpx 0;
+		border-bottom-width: 1rpx;
+		border-bottom-color: #EEEEEE;
+	}
+	
+	.menu-icon {
+		width: 96rpx;
+		height: 96rpx;
+		border-radius: 24rpx;
+		align-items: center;
+		justify-content: center;
+	}
+	
+	.icon {
+		width: 48rpx;
+		height: 48rpx;
+	}
+	
+	.menu-title {
+		flex: 1;
+		font-size: 32rpx;
+		margin-left: 24rpx;
+		color: #333333;
+	}
+	
+	.arrow {
+		font-size: 32rpx;
+		color: #999999;
+		margin-right: 8rpx;
+	}
+</style>

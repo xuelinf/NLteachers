@@ -1,0 +1,353 @@
+<template>
+	<view class="container">
+		<!-- 顶部安全区域 -->
+		<view class="status-bar"></view>
+
+		<!-- 内容区域 -->
+		<scroll-view class="content" scroll-y>
+			<!-- 顶部横幅 -->
+			<view class="banner" :style="{ marginTop: bannerTop + 'px' }">
+				<image class="banner-image" :src="categoryInfo.banner" mode="widthFix"></image>
+			</view>
+
+			<!-- 搜索框 -->
+			<view class="search-box">
+				<view class="search-input">
+					<fui-icon name="search" :size="40" color="#999999"></fui-icon>
+					<input class="input" type="text" :placeholder="categoryInfo.searchPlaceholder" placeholder-class="input-placeholder" v-model="searchText" @input="onSearch"/>
+				</view>
+			</view>
+
+			<!-- 智能体列表 -->
+			<view class="agent-list">
+				<view class="agent-item" v-for="(agent, index) in filteredAgents" :key="index" @tap="chat(agent)">
+					<image class="agent-image" :src="agent.image" mode="widthFix"></image>
+				</view>
+			</view>
+			
+			<!-- 底部留白区域 -->
+			<view class="bottom-space"></view>
+		</scroll-view>
+
+		<!-- 底部导航栏 -->
+		<view class="tabbar">
+			<view class="tabbar-item" @tap="fabClick(0)">
+				<view class="tabbar-icon-box">
+					<fui-icon name="message" :size="48" :color="current === 0 ? '#465CFF' : '#333333'"></fui-icon>
+					<text class="tabbar-text" :class="{'tabbar-text-active': current === 0}">聊天</text>
+				</view>
+			</view>
+			<view class="tabbar-item" @tap="fabClick(1)">
+				<view class="tabbar-icon-box">
+					<fui-icon name="home" :size="48" :color="current === 1 ? '#465CFF' : '#333333'"></fui-icon>
+					<text class="tabbar-text" :class="{'tabbar-text-active': current === 1}">主页</text>
+				</view>
+			</view>
+			<view class="tabbar-item" @tap="fabClick(2)">
+				<view class="tabbar-icon-box">
+					<fui-icon name="my" :size="48" :color="current === 2 ? '#465CFF' : '#333333'"></fui-icon>
+					<text class="tabbar-text" :class="{'tabbar-text-active': current === 2}">我的</text>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+import { BotType } from '@/src/shared/common/common'
+
+// 定义每个分类的配置信息
+const categoryConfig = {
+	companion: {
+		banner: '/static/images/agents/companion/banner.png',
+		searchPlaceholder: '搜索陪伴机器人',
+		agents: [{
+			id: BotType.知识点顺口溜,
+			name: '知识点顺口溜',
+			image: '/static/images/agents/companion/agent-1.png'
+		}, {
+			id: BotType.历史说书人,
+			name: '历史说书人',
+			image: '/static/images/agents/companion/agent-2.png'
+		}, {
+			id: BotType.英语对话伙伴,
+			name: '英语对话伙伴',
+			image: '/static/images/agents/companion/agent-3.png'
+		}]
+	},
+	growth: {
+		banner: '/static/images/agents/growth/banner.png',
+		searchPlaceholder: '搜索成长机器人',
+		agents: [{
+			id: BotType.小小理财师,
+			name: '小小理财师',
+			image: '/static/images/agents/growth/agent-1.png'
+		}, {
+			id: BotType.安全知识闯关,
+			name: '安全知识闯关',
+			image: '/static/images/agents/growth/agent-2.png'
+		}, {
+			id: BotType.生活小妙招,
+			name: '生活小妙招',
+			image: '/static/images/agents/growth/agent-3.png'
+		}]
+	},
+	fun: {
+		banner: '/static/images/agents/fun/banner.png',
+		searchPlaceholder: '搜索趣味机器人',
+		agents: [{
+			id: BotType.小小画家,
+			name: '小小画家',
+			image: '/static/images/agents/fun/agent-1.png'
+		}, {
+			id: BotType.趣味科普站,
+			name: '趣味科普站',
+			image: '/static/images/agents/fun/agent-2.png'
+		}, {
+			id: BotType.故事大王,
+			name: '故事大王',
+			image: '/static/images/agents/fun/agent-3.png'
+		}]
+	},
+	heart: {
+		banner: '/static/images/agents/heart/banner.png',
+		searchPlaceholder: '搜索心灵机器人',
+		agents: [{
+			id: BotType.心事树洞,
+			name: '心事树洞',
+			image: '/static/images/agents/heart/agent-1.png'
+		}, {
+			id: BotType.友谊小顾问,
+			name: '友谊小顾问',
+			image: '/static/images/agents/heart/agent-2.png'
+		}, {
+			id: BotType.每日暖心信,
+			name: '每日暖心信',
+			image: '/static/images/agents/heart/agent-3.png'
+		}]
+	}
+}
+
+export default {
+	data() {
+		return {
+			current: 0,
+			searchText: '',
+			category: '',
+			bannerTop: 0,
+			categoryInfo: {
+				banner: '',
+				searchPlaceholder: '搜索机器人',
+				agents: []
+			}
+		}
+	},
+	computed: {
+		filteredAgents() {
+			if (!this.searchText) return this.categoryInfo.agents
+			const searchText = this.searchText.toLowerCase()
+			return this.categoryInfo.agents.filter(agent => 
+				agent.name.toLowerCase().includes(searchText)
+			)
+		}
+	},
+	onLoad(options) {
+		// 获取胶囊按钮位置信息
+		const menuButtonInfo = uni.getMenuButtonBoundingClientRect()
+		// 设置banner的上边距为胶囊按钮底部位置
+		this.bannerTop = menuButtonInfo.bottom
+		
+		// 获取传入的category参数
+		this.category = options.category
+		// 根据category加载对应的配置信息
+		if (categoryConfig[this.category]) {
+			this.categoryInfo = categoryConfig[this.category]
+		}
+	},
+	methods: {
+		onSearch(e) {
+			this.searchText = e.detail.value
+		},
+		chat(item) {
+			// 使用 Storage 存储当前机器人类型
+			uni.setStorageSync('currentBotType', item.id);
+			console.log('Set storage currentBotType to:', item.id);
+			
+			// 检查是否存在聊天记录
+			const chatHistory = uni.getStorageSync('chatHistory') || [];
+			const existingChat = chatHistory.find(chat => chat.agentId === item.id);
+			
+			// 如果存在聊天记录，直接跳转到聊天页面
+			if (existingChat) {
+				uni.navigateTo({
+					url: '/pages/chat/chat'
+				});
+				return;
+			}
+			
+			// 如果不存在聊天记录，先清除可能存在的详细记录，再跳转
+			try {
+				uni.removeStorageSync(`chatDetail_${item.id}`);
+			} catch (error) {
+				console.error('清除聊天记录失败:', error);
+			}
+			
+			uni.navigateTo({
+				url: '/pages/chat/chat'
+			});
+		},
+		fabClick(index) {
+			switch (index) {
+				case 0: // 聊天记录
+					uni.redirectTo({
+						url: '/pages/index/index'
+					});
+					break;
+				case 1: // 主页
+					uni.redirectTo({
+						url: '/pages/home/home'
+					});
+					break;
+				case 2: // 个人中心
+					uni.navigateTo({
+						url: '/pages/my/my'
+					});
+					break;
+			}
+		},
+		navigateToMy() {
+			uni.navigateTo({
+				url: '/pages/my/my'
+			});
+		},
+		navigateToChat() {
+			uni.redirectTo({
+				url: '/pages/index/index'
+			});
+		},
+		handleAgentClick(agentId) {
+			// 跳转到聊天页面并传递智能体ID
+			uni.navigateTo({
+				url: `/pages/chat/chat?botType=${agentId}`
+			});
+		}
+	}
+}
+</script>
+
+<style>
+.container {
+	flex: 1;
+	background-color: #FFFFFF;
+}
+
+/* 状态栏占位 */
+.status-bar {
+	height: var(--status-bar-height);
+	background-color: #FFFFFF;
+}
+
+/* 内容区域可滚动 */
+.content {
+	flex: 1;
+}
+
+.banner {
+	width: 750rpx;
+	overflow: hidden;
+}
+
+.banner-image {
+	width: 750rpx;
+	/* 使用widthFix模式，高度会自动按照图片比例计算 */
+}
+
+/* 搜索框样式 */
+.search-box {
+	margin: 0 30rpx;
+	margin-top: -40rpx;
+	position: relative;
+	z-index: 1;
+}
+
+.search-input {
+	flex-direction: row;
+	align-items: center;
+	background-color: #F5F5F5;
+	border-radius: 100rpx;
+	padding: 12rpx 24rpx;
+}
+
+.input {
+	flex: 1;
+	height: 72rpx;
+	margin-left: 16rpx;
+	font-size: 28rpx;
+}
+
+.input-placeholder {
+	color: #999999;
+}
+
+/* 智能体列表样式 */
+.agent-list {
+	padding: 20rpx 30rpx;
+}
+
+.agent-item {
+	margin-bottom: 20rpx;
+	border-radius: 24rpx;
+	overflow: hidden;
+	/* #ifdef APP-NVUE */
+	elevation: 2;
+	/* #endif */
+}
+
+.agent-image {
+	width: 690rpx;
+	/* 使用widthFix模式，高度会自动按照图片比例计算 */
+}
+
+/* 底部留白区域 */
+.bottom-space {
+	height: 240rpx;
+}
+
+/* TabBar样式 */
+.tabbar {
+	position: fixed;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 200rpx;
+	background-color: #FFFFFF;
+	flex-direction: row;
+	justify-content: space-around;
+	align-items: center;
+	border-top-width: 1rpx;
+	border-top-color: #EEEEEE;
+	padding-bottom: env(safe-area-inset-bottom);
+}
+
+.tabbar-item {
+	flex: 1;
+	height: 100%;
+	justify-content: center;
+	align-items: center;
+}
+
+.tabbar-icon-box {
+	justify-content: center;
+	align-items: center;
+}
+
+.tabbar-text {
+	font-size: 20rpx;
+	color: #333333;
+	margin-top: 4rpx;
+}
+
+.tabbar-text-active {
+	color: #465CFF;
+}
+</style>

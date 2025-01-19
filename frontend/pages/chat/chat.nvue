@@ -1,0 +1,998 @@
+<template>
+	<view class="fui-wrap">
+		<view class="fui-chat__list" :class="{'fui-chat__pbm':faceShow}">
+			<!-- 图片 -->
+			<view class="fui-chat__item" v-for="(message, index) in messageList" :key="index"
+				:class="{'fui-item__right': message.isUser}">
+				<fui-avatar
+					:src="message.isUser ? '/static/images/chat/avatar/img_avatar_1.png' : '/static/images/chat/avatar/img_avatar_2.png'"></fui-avatar>
+				<view class="fui-content__box">
+					<template v-if="message.type === 'image'">
+						<image class="chat-image" 
+							:src="message.content" 
+							mode="widthFix"
+							@load="onImageLoad"
+							@error="onImageError"
+							@click="previewImage(message.content)"></image>
+						<text v-if="message.altText" class="image-alt-text">{{message.altText}}</text>
+					</template>
+					<text v-else class="fui-content__text" :class="{'typing': message.isTyping}">{{message.content}}</text>
+				</view>
+			</view>
+			<!-- 加载中提示 -->
+			<view class="fui-chat__item" v-if="isLoading">
+				<fui-avatar src="/static/images/chat/avatar/img_avatar_2.png"></fui-avatar>
+				<view class="fui-content__box">
+					<text class="fui-content__text">正在思考中...</text>
+				</view>
+			</view>
+
+		</view>
+
+		<!-- 图片预览遮罩层 -->
+		<view v-if="showImagePreview" class="image-preview-mask" @click="closePreview">
+			<image 
+				:src="previewImageUrl" 
+				mode="aspectFit"
+				class="preview-image"
+				@click.stop></image>
+		</view>
+
+		<!-- #ifdef APP-NVUE -->
+		<view class="fui-chatbar__fixed" :style="{transform: `translateY(${faceShow?0:translateY})px`}">
+		<!-- #endif -->
+			<!-- #ifndef APP-NVUE -->
+			<view class="fui-chatbar__fixed" :class="[faceShow?'fui-face__show':'fui-face__hidden']">
+			<!-- #endif -->
+				<view class="fui-chatbar__wrap">
+					<view class="fui-chatbar__icon-box" @tap="openPopup">
+						<fui-icon name="plussign"></fui-icon>
+					</view>
+					<view class="fui-chatbar__icon-box fui-chatbar__pdl" @tap.stop="faceChange">
+						<fui-icon name="face"></fui-icon>
+					</view>
+					<view class="fui-chatbar__input-box">
+						<textarea ref="textareaRef" :fixed="true" auto-height :show-count="false"
+							disable-default-padding confirm-type="send" class="fui-chatbar__input"
+							:cursor-spacing="spacing" @focus="focusChange" @blur="blurChange" v-model="msg"></textarea>
+						<view class="fui-chatbar__voice" v-if="!isVoice">
+							<text class="fui-chatbar__voice-text">按住 说话</text>
+						</view>
+					</view>
+					<view class="fui-chatbar__icon-box" @click="change">
+						<fui-icon :name="isVoice?'voice':'keyboard'" v-if="!isSend"></fui-icon>
+						<image class="fui-btn__send" src="/static/images/chat/send.png" v-else></image>
+					</view>
+				</view>
+				<view class="fui-scroll__box">
+					<scroll-view scroll-y class="fui-face__box" :style="{opacity:faceShow?1:0}">
+						<view class="fui-face__inner">
+							<text class="fui-face__text fui--active" v-for="(item,index) in faceList" :key="index"
+								@click="faceClick(item)">{{item}}</text>
+						</view>
+					</scroll-view>
+					<view class="fui-del__box" @tap.stop="delMsg">
+						<fui-icon name="backspace" :size="56"></fui-icon>
+					</view>
+				</view>
+				<!-- #ifdef APP-NVUE -->
+				<fui-safe-area background="#f8f8f8"></fui-safe-area>
+				<!-- #endif -->
+				<!-- #ifndef APP-NVUE -->
+				<fui-safe-area background="#f8f8f8" v-if="!focus"></fui-safe-area>
+				<!-- #endif -->
+			</view>
+
+			<fui-bottom-popup :show="show" @close="closePopup">
+				<view class="fui-custom__wrap">
+					<view class="fui-op__list">
+						<view class="fui-op__item fui--active" v-for="(item,index) in opList" :key="index">
+							<image class="fui-op--img" :src="`/static/images/chat/img_${item.src}.png`"></image>
+							<text class="fui-op--text">{{item.text}}</text>
+						</view>
+					</view>
+					<view class="fui-icon__close fui--active" @tap="closePopup">
+						<fui-icon name="close" :size="52"></fui-icon>
+					</view>
+				</view>
+			</fui-bottom-popup>
+		</view>
+</template>
+
+<script>
+	import { BotType } from '@/src/shared/common/common';
+	import fuiButton from '@/components/firstui/fui-button/fui-button';
+	import {
+		Define
+	} from '../../src/define/define';
+	import {
+		Config
+	} from '../../src/config.ts';
+	import faceList from './emoji.js'
+	import {
+		WsClient
+	} from 'tsrpc-miniapp'
+	import {
+		serviceProto
+	} from "../../src/shared/protocols/serviceProto";
+
+	export default {
+		data() {
+			let spacing = 16
+			// #ifdef APP-NVUE
+			spacing = 6
+			// #endif
+			return {
+				messageList: [], // 存储所有对话消息
+				isLoading: false, // 是否正在加载回复
+				currentTypingMessage: null, // 当前正在输入的消息
+				currentConversation: null, // 存储当前会话ID
+				currentBotType: null, // 当前智能体类型
+				isProcessingImage: false, // 是否正在处理图片消息
+				detailedChatHistory: [], // 存储详细的聊天记录
+				opList: [{
+					src: 'doc',
+					text: '文件'
+				}, {
+					src: 'camera',
+					text: '拍摄'
+				}, {
+					src: 'pic',
+					text: '照片'
+				}, {
+					src: 'addr',
+					text: '位置'
+				}, {
+					src: 'user',
+					text: '联系人'
+				}, {
+					src: 'audio',
+					text: '语音输入'
+				}],
+				faceList,
+				spacing,
+				isVoice: true,
+				focus: false,
+				faceShow: false,
+				msg: '',
+				show: false,
+				isSend: false,
+				agentId: '', // 存储智能体ID
+				agentInfo: {
+					name: '',
+					firstMessage: ''
+				},
+				translateY: uni.upx2px(520),
+				showImagePreview: false, // 是否显示图片预览
+				previewImageUrl: '', // 预览图片的URL
+				session: ''
+			}
+		},
+		async onLoad(options) {
+			console.log('=== Chat Page onLoad ===');
+			
+			// 从 Storage 获取当前机器人类型
+			this.currentBotType = uni.getStorageSync('currentBotType');
+			
+			this.agentId = options.agent;
+			
+			// 先加载历史记录
+			await this.loadChatHistory();
+			
+			// 获取session
+			this.session = uni.getStorageSync(Define.SessionStorageKey);
+			
+			// 如果已存在client连接，先关闭它
+			if (this.client) {
+				await this.client.disconnect();
+				this.client = null;
+			}
+			
+			// 初始化新的客户端连接
+			this.client = new WsClient(serviceProto, Config.tsrpcWsClientCfg);
+			
+			// 连接到服务器
+			try {
+				await this.client.connect();
+				console.log('Connected to server with bot type:', this.currentBotType);
+				
+				// 监听服务器回复
+				this.client.listenMsg('Answer', (data) => {
+					console.log('Received answer:', data);
+					
+					if (data.complete) {
+						// 收到完成消息，处理当前累积的消息内容
+						this.isLoading = false;
+						
+						if (this.currentTypingMessage) {
+							this.currentTypingMessage.isTyping = false;
+							
+							// 处理消息中的markdown图片
+							const content = this.currentTypingMessage.content;
+							const imgRegex = /!\[(.*?)\]\((.*?)\)/g;
+							let match;
+							let lastIndex = 0;
+							let processedContent = '';
+							
+							// 存储找到的图片信息
+							const images = [];
+							
+							// 处理文本中的markdown图片
+							while ((match = imgRegex.exec(content)) !== null) {
+								// 添加图片前的文本
+								processedContent += content.slice(lastIndex, match.index);
+								lastIndex = match.index + match[0].length;
+								
+								// 保存图片信息
+								images.push({
+									alt: match[1],
+									url: match[2]
+								});
+							}
+							
+							// 添加剩余的文本
+							processedContent += content.slice(lastIndex);
+							processedContent = processedContent.trim();
+							
+							// 更新当前消息的内容（移除markdown图片语法）
+							this.currentTypingMessage.content = processedContent;
+							
+							// 保存机器人的完整回复消息
+							if (lastIndex>0){
+							this.saveMessageRecord(content.slice(0,lastIndex), true);
+							this.saveMessageRecord(processedContent, true);
+							}else{
+							this.saveMessageRecord(content, true);
+							}
+							
+							// 为每个图片创建新的消息
+							images.forEach(img => {
+								const imageMessage = {
+									content: img.url,
+									type: 'image',
+									isUser: false,
+									isTyping: false,
+									altText: img.alt,
+									timestamp: new Date().getTime()
+								};
+								this.messageList.push(imageMessage);
+							});
+							
+							this.currentTypingMessage = null;
+						}
+					} else if (data.msg) {
+						// 收到消息片段
+						if (!this.currentTypingMessage) {
+							// 创建新的输入中消息
+							const botMessage = {
+								content: data.msg,
+								isUser: false,
+								isTyping: true,
+								timestamp: new Date().getTime()
+							};
+							this.messageList.push(botMessage);
+							this.currentTypingMessage = botMessage;
+						} else {
+							// 追加内容到当前消息
+							this.currentTypingMessage.content += data.msg;
+						}
+						
+						// 如果有会话ID，保存它
+						if (data.conversation) {
+							this.currentConversation = data.conversation;
+						}
+					}
+				});
+				
+			} catch (error) {
+				console.error('Failed to connect:', error);
+				uni.showToast({
+					title: '连接服务器失败',
+					icon: 'none'
+				});
+				return;
+			}
+			
+			if (this.messageList.length>0){
+				this.currentConversation = this.messageList[this.messageList.length-1].conversationId;
+			}else{
+				// 重置conversation
+				this.currentConversation = null;
+				
+				// 如果没有设置智能体类型，使用默认值
+				if (!this.currentBotType) {
+					this.currentBotType = BotType.小小画家;
+				}
+				
+				// 发送消息到服务器
+				await this.client.sendMsg('Question', {
+					session: this.session,
+					botType: this.currentBotType,
+					msg: '请介绍你的功能',
+				});
+			}
+		},
+		watch: {
+			msg(newValue, oldValue) {
+				if (newValue) {
+					this.isSend = true
+				} else {
+					this.isSend = false
+				}
+			}
+		},
+		methods: {
+			change() {
+				if (this.msg) {
+					this.handleSend(); // 调用新的发送处理方法
+				} else {
+					this.isVoice = !this.isVoice;
+					this.faceShow = false;
+					uni.hideKeyboard()
+					// #ifdef APP-NVUE
+					this.$refs.textareaRef.blur()
+					// #endif
+				}
+			},
+			focusChange() {
+				this.focus = true;
+			},
+			blurChange() {
+				this.focus = false
+			},
+			faceChange() {
+				this.faceShow = !this.faceShow;
+				if (this.faceShow) {
+					this.isVoice = true;
+				}
+				uni.hideKeyboard()
+				// #ifdef APP-NVUE
+				this.$refs.textareaRef.blur()
+				// #endif
+			},
+			faceClick(item) {
+				if (!this.faceShow) return;
+				this.msg += item;
+			},
+			openPopup() {
+				this.show = true
+				this.faceShow = false
+				uni.hideKeyboard()
+				// #ifdef APP-NVUE
+				this.$refs.textareaRef.blur()
+				// #endif
+			},
+			closePopup() {
+				this.show = false
+			},
+			delMsg() {
+				if (!this.msg) return;
+				let number = 1;
+				if (this.msg.length > 1) {
+					number = this.msg.substr(this.msg.length - 2, this.msg.length).search(
+						/(\ud83c[\udf00-\udfff])|(\ud83d[\udc00-\ude4f])|(\ud83d[\ude80-\udeff])/i) == -1 ? 1 : 2;
+				}
+				this.msg = this.msg.substr(0, this.msg.length - number);
+			},
+			fetchAgentInfo() {
+				// 根据具体的智能体ID设置对应的身份和对话内容
+				switch (this.agentId) {
+					// 陪伴智能体
+					case 'companion-1':
+						this.agentInfo.name = '知识点顺口溜';
+						this.agentInfo.firstMessage = '很高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
+						break;
+					case 'companion-2':
+						this.agentInfo.name = '历史说书人';
+						this.agentInfo.firstMessage = '高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
+						break;
+					case 'companion-3':
+						this.agentInfo.name = '英语对话伙伴';
+						this.agentInfo.firstMessage = '高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
+						break;
+
+						// 成长智能体
+					case 'growth-1':
+						this.agentInfo.name = '励志';
+						this.agentInfo.firstMessage = '高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
+						break;
+					case 'growth-2':
+						this.agentInfo.name = '智慧';
+						this.agentInfo.firstMessage = '高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
+						break;
+					case 'growth-3':
+						this.agentInfo.name = '创新';
+						this.agentInfo.firstMessage = '高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
+						break;
+
+						// 趣味智能体
+					case 'fun-1':
+						this.agentInfo.name = '幽默';
+						this.agentInfo.firstMessage = '高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
+						break;
+					case 'fun-2':
+						this.agentInfo.name = '活力';
+						this.agentInfo.firstMessage = '高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
+						break;
+					case 'fun-3':
+						this.agentInfo.name = '欢乐';
+						this.agentInfo.firstMessage = '高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
+						break;
+
+						// 心灵智能体
+					case 'heart-1':
+						this.agentInfo.name = '静心';
+						this.agentInfo.firstMessage = '高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
+						break;
+					case 'heart-2':
+						this.agentInfo.name = '悦心';
+						this.agentInfo.firstMessage = '高兴见到你，我是念念老师，我会认真倾听你的每一句话。';
+						break;
+					case 'heart-3':
+						this.agentInfo.name = '知心';
+						this.agentInfo.firstMessage = '	你好啊，我是知心老师，有什么想和我分享的吗？';
+						break;
+
+					default:
+						this.agentInfo.name = '智能';
+						this.agentInfo.firstMessage = '你好，很高兴见到你！';
+				}
+				// 只有在没有历史记录的情况下，才添加初始消息
+				if (this.messageList.length === 0) {
+					this.addMessage(this.agentInfo.firstMessage, false);
+				}
+			},
+			// addMessage(content, isUser = false) {
+			// 	const message = {
+			// 		content,
+			// 		isUser,
+			// 		timestamp: Date.now()
+			// 	};
+			// 	this.messageList.push(message);
+
+			// 	// 保存到详细聊天记录
+			// 	this.saveDetailedChatHistory(message);
+			// 	// 保存到首页聊天记录
+			// 	this.saveChatHistory(message);
+			// },
+
+			// saveChatHistory(message) {
+			// 	try {
+			// 		// 构建聊天记录对象
+			// 		const chatRecord = {
+			// 			agentId: this.agentId,
+			// 			agentName: this.agentInfo.name,
+			// 			lastMessage: message.content,
+			// 			timestamp: message.timestamp,
+			// 			avatar: '/static/images/chat/avatar/img_avatar_2.png', // 使用与聊天页面相同的头像
+			// 			status: 1 // 在线状态
+			// 		};
+
+			// 		// 从本地存储获取现有聊天记录
+			// 		let chatHistory = uni.getStorageSync('chatHistory') || [];
+			// 		if (!Array.isArray(chatHistory)) {
+			// 			chatHistory = [];
+			// 		}
+
+			// 		// 查找是否存在与该智能体的聊天记录
+			// 		const existingIndex = chatHistory.findIndex(item => item.agentId === this.agentId);
+			// 		if (existingIndex !== -1) {
+			// 			// 更新现有记录
+			// 			chatHistory[existingIndex] = {
+			// 				...chatHistory[existingIndex],
+			// 				lastMessage: message.content,
+			// 				timestamp: message.timestamp
+			// 			};
+			// 		} else {
+			// 			// 添加新记录
+			// 			chatHistory.unshift(chatRecord);
+			// 		}
+
+			// 		// 保存回本地存储
+			// 		uni.setStorageSync('chatHistory', chatHistory);
+			// 		console.log('[HISTORY]',chatHistory);
+			// 	} catch (error) {
+			// 		console.error('保存聊天记录失败:', error);
+			// 	}
+			// },
+
+			// // 加载详细聊天记录
+			// loadDetailedChatHistory() {
+			// 	try {
+			// 		// 获取该智能体的详细聊天记录
+			// 		const detailedHistory = uni.getStorageSync(`chatDetail_${this.agentId}`) || [];
+			// 		if (Array.isArray(detailedHistory)) {
+			// 			// 将历史记录添加到消息列表
+			// 			this.detailedChatHistory = detailedHistory;
+			// 			detailedHistory.forEach(message => {
+			// 				this.messageList.push(message);
+			// 			});
+			// 		}
+			// 	} catch (error) {
+			// 		console.error('加载详细聊天记录失败:', error);
+			// 	}
+			// },
+
+			// // 保存详细聊天记录
+			// saveDetailedChatHistory(message) {
+			// 	try {
+			// 		// 获取现有的详细聊天记录
+			// 		let detailedHistory = [...this.detailedChatHistory];
+
+			// 		// 添加新消息
+			// 		detailedHistory.push(message);
+			// 		this.detailedChatHistory = detailedHistory;
+
+			// 		// 保存到本地存储
+			// 		uni.setStorageSync(`chatDetail_${this.agentId}`, detailedHistory);
+			// 	} catch (error) {
+			// 		console.error('保存详细聊天记录失败:', error);
+			// 	}
+			// },
+
+			async sendToKouZiAPI(message) {
+				try {
+					const response = await uni.request({
+						url: 'https://api.kouzi.com/chat', // 替换为实际的扣子API地址
+						method: 'POST',
+						data: {
+							agentId: this.agentId,
+							message: message
+						},
+						header: {
+							'content-type': 'application/json',
+							'Authorization': 'Bearer your_api_key' // 需要替换为实际的API密钥
+						}
+					});
+
+					if (response.statusCode === 200) {
+						return response.data.reply;
+					} else {
+						throw new Error('API请求失败');
+					}
+				} catch (error) {
+					console.error('发送消息失败:', error);
+					return '抱歉，我现在无法回复，请稍后再试。';
+				}
+			},
+
+			async handleSend() {
+				if (!this.msg.trim()) return;
+				
+				// 添加用户消息到列表
+				const userMessage = {
+					content: this.msg,
+					isUser: true,
+					timestamp: new Date().getTime()
+				};
+				this.messageList.push(userMessage);
+				
+				// 保存用户消息记录
+				this.saveMessageRecord(this.msg, false);
+
+				// 保存消息内容并清空输入框
+				const messageContent = this.msg;
+				this.msg = '';
+				this.isSend = false;
+				this.isLoading = true;
+
+				try {
+					// 发送消息到服务器
+					await this.client.sendMsg('Question', {
+						session: this.session,
+						botType: this.currentBotType,
+						msg: messageContent,
+						// 只有当存在conversation且botType没有改变时才发送conversation
+						conversation: this.currentConversation
+					});
+					
+					// 确保之前的消息已完成
+					if (this.currentTypingMessage) {
+						this.currentTypingMessage.isTyping = false;
+						this.currentTypingMessage = null;
+					}
+					
+				} catch (error) {
+					console.error('发送消息失败:', error);
+					this.isLoading = false;
+					uni.showToast({
+						title: '发送失败，请重试',
+						icon: 'none'
+					});
+				}
+			},
+			onImageLoad(e) {
+				console.log('Image loaded successfully:', e);
+			},
+			onImageError(e) {
+				console.error('Image load error:', e);
+				// 可以在这里添加图片加载失败的处理逻辑
+				uni.showToast({
+					title: '图片加载失败',
+					icon: 'none'
+				});
+			},
+			previewImage(url) {
+				this.previewImageUrl = url;
+				this.showImagePreview = true;
+			},
+			closePreview() {
+				this.showImagePreview = false;
+				this.previewImageUrl = '';
+			},
+			// 新的聊天记录保存函数
+			saveMessageRecord(content, isBot) {
+				try {
+					// 获取现有记录
+					const messageRecords = uni.getStorageSync('messageRecords-'+this.currentBotType) || [];
+					
+					// 创建新的记录
+					const newRecord = {
+						botType: this.currentBotType,
+						isBot: isBot ? 1 : 0,
+						content: content,
+						conversationId: this.currentConversation || '',
+						timestamp:new Date().getTime(),
+					};
+					
+					// 添加到记录列表
+					messageRecords.push(newRecord);
+					
+					// 保存回本地存储
+					uni.setStorageSync('messageRecords-'+this.currentBotType, messageRecords);
+					console.log('[MESSAGE RECORD]', messageRecords);
+				} catch (error) {
+					console.error('保存消息记录失败:', error);
+				}
+			},
+			loadChatHistory(){
+				let messageRecords = uni.getStorageSync('messageRecords-'+this.currentBotType) || [];
+				for (const msg of messageRecords){
+					// 处理消息中的markdown图片
+					const content = msg.content;
+					const imgRegex = /!\[(.*?)\]\((.*?)\)/g;
+					let match;
+					let lastIndex = 0;
+					let processedContent = '';
+					
+					// 存储找到的图片信息
+					const images = [];
+					
+					// 处理文本中的markdown图片
+					while ((match = imgRegex.exec(content)) !== null) {
+						// 添加图片前的文本
+						processedContent += content.slice(lastIndex, match.index);
+						lastIndex = match.index + match[0].length;
+						
+						// 保存图片信息
+						images.push({
+							alt: match[1],
+							url: match[2]
+						});
+					}
+					
+					// 为每个图片创建新的消息
+					images.forEach(img => {
+						const imageMessage = {
+							content: img.url,
+							type: 'image',
+							isUser: false,
+							isTyping: false,
+							altText: img.alt,
+							timestamp: msg.timestamp
+						};
+						this.messageList.push(imageMessage);
+					});
+					
+					if (images.length > 0){
+						continue;
+					}
+					
+					const botMessage = {
+						content: msg.content,
+						isUser: !msg.isBot,
+						isTyping: false,
+						timestamp: msg.timestamp,
+					};
+					this.messageList.push(botMessage);
+				}
+			},
+		},
+		async onUnload() {
+			console.log('=== Chat Page onUnload ===');
+			if (this.client) {
+				try {
+					// 关闭当前正在输入的消息（如果有）
+					if (this.currentTypingMessage) {
+						this.currentTypingMessage.isTyping = false;
+						this.currentTypingMessage = null;
+					}
+					
+					// 关闭socket连接
+					await this.client.disconnect();
+					this.client = null;
+					console.log('Socket connection closed successfully');
+				} catch (error) {
+					console.error('Error closing socket connection:', error);
+				}
+			}
+		},
+	}
+</script>
+
+<style>
+	.fui-wrap {
+		padding-bottom: 180rpx;  /* 增加底部边距，确保最后一条消息不被输入框遮挡 */
+	}
+
+	.fui-chat__list {
+		padding: 32rpx 32rpx 20rpx;  /* 增加底部内边距 */
+		flex: 1;
+		/* #ifndef APP-NVUE */
+		width: 100%;
+		/* #endif */
+	}
+
+	.fui-chat__pbm {
+		padding-bottom: 540rpx;  /* 表情面板展开时的底部边距 */
+	}
+
+	.fui-chat__item {
+		display: flex;
+		align-items: flex-start;
+		margin-bottom: 32rpx;
+		padding: 0 20rpx;
+	}
+
+	.fui-item__right {
+		flex-direction: row-reverse;
+	}
+
+	.fui-content__box {
+		max-width: 480rpx;
+		margin-left: 20rpx;
+		margin-right: 20rpx;
+	}
+
+	.fui-content__text {
+		font-size: 32rpx;
+		padding: 18rpx 24rpx;
+		border-radius: 20rpx;
+		word-break: break-all;
+		background: #f1f1f1;
+		color: #333;
+	}
+
+	.fui-item__right .fui-content__text {
+		background: #007AFF;
+		color: #fff;
+	}
+	
+	/* 添加打字机效果的样式 */
+	.typing {
+		border-right: 2px solid #666;
+		animation: cursor-blink 0.8s infinite;
+	}
+	
+	@keyframes cursor-blink {
+		0%, 100% {
+			border-right-color: transparent;
+		}
+		50% {
+			border-right-color: #666;
+		}
+	}
+
+	.fui-chatbar__wrap {
+		width: 100%;
+		display: flex;
+		padding: 6px 0;
+		flex-direction: row;
+		align-items: flex-end;
+		justify-content: space-between;
+		background: #FAFAFA;
+	}
+
+	.fui-chatbar__input-box {
+		width: 100%;
+		display: flex;
+		flex-direction: row;
+		flex: 1;
+		position: relative;
+	}
+
+	.fui-chatbar__input {
+		width: 100%;
+		min-height: 32rpx;
+		box-sizing: content-box;
+		padding: 20rpx;
+		flex: 1;
+		border-radius: 8rpx;
+		font-size: 32rpx;
+		background: #fff;
+	}
+
+	.fui-chatbar__voice {
+		position: absolute;
+		left: 0;
+		right: 0;
+		top: 0;
+		bottom: 0;
+		background: #fff;
+		border-radius: 8rpx;
+		text-align: center;
+		display: flex;
+		z-index: 10;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.fui-chatbar__voice:active {
+		background-color: #ddd;
+	}
+
+	.fui-chatbar__voice-text {
+		text-align: center;
+		font-weight: bold;
+		font-size: 32rpx;
+	}
+
+	.fui-chatbar__icon-box {
+		height: 72rpx;
+		padding: 0 16rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.fui-chatbar__icon-box:active {
+		opacity: .5;
+	}
+
+	.fui-btn__send {
+		width: 64rpx;
+		height: 64rpx;
+	}
+
+	.fui-chatbar__pdl {
+		padding-left: 0;
+	}
+
+	.fui-chatbar__fixed {
+		width: 750rpx;
+		position: fixed;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		z-index: 10;
+		transition: all 0.2s ease-in-out;
+		background-color: #f8f8f8;
+	}
+
+	.fui-face__hidden {
+		transform: translate3d(0, 520rpx, 0);
+	}
+
+	.fui-face__show {
+		transform: translate3d(0, 0, 0);
+	}
+
+	.fui-scroll__box {
+		position: relative;
+	}
+
+	.fui-face__box {
+		width: 100%;
+		height: 520rpx;
+		background-color: #f8f8f8;
+	}
+
+	.fui-face__inner {
+		width: 100%;
+		display: flex;
+		box-sizing: border-box;
+		flex-direction: row;
+		flex-wrap: wrap;
+		padding: 32rpx 2rpx;
+	}
+
+	.fui-face__text {
+		display: flex;
+		width: 106rpx;
+		font-size: 60rpx;
+		padding: 16rpx 0;
+		text-align: center;
+		justify-content: center;
+		align-items: center;
+	}
+
+	.fui-del__box {
+		position: absolute;
+		right: 32rpx;
+		bottom: 32rpx;
+		width: 120rpx;
+		height: 72rpx;
+		background-color: #fff;
+		border-radius: 16rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+	}
+
+	.fui-del__box:active {
+		background-color: #ddd;
+	}
+
+	.fui-custom__wrap {
+		width: 100%;
+		display: flex;
+		height: 520rpx;
+		flex-direction: row;
+		position: relative;
+	}
+
+	.fui-icon__close {
+		position: absolute;
+		right: 32rpx;
+		top: 32rpx;
+	}
+
+	.fui-op__list {
+		flex: 1;
+		width: 100%;
+		display: flex;
+		box-sizing: border-box;
+		flex-direction: row;
+		flex-wrap: wrap;
+		padding: 100rpx 44rpx 0;
+	}
+
+	.fui-op__item {
+		width: 220rpx;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		margin-bottom: 32rpx;
+	}
+
+	.fui-op--img {
+		width: 120rpx;
+		height: 120rpx;
+	}
+
+	.fui-op--text {
+		font-size: 28rpx;
+		padding-top: 12rpx;
+	}
+
+	.chat-image {
+		max-width: 400rpx;
+		border-radius: 12rpx;
+		margin: 8rpx 0;
+	}
+	
+	.image-alt-text {
+		font-size: 24rpx;
+		color: #999;
+		margin-top: 4rpx;
+	}
+	
+	/* 图片预览样式 */
+	.image-preview-mask {
+		position: fixed;
+		top: 0;
+		left: 0;
+		right: 0;
+		bottom: 0;
+		background-color: rgba(0, 0, 0, 0.9);
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		z-index: 999;
+	}
+	
+	.preview-image {
+		max-width: 100%;
+		max-height: 100%;
+	}
+</style>

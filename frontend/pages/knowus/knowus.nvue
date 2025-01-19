@@ -1,0 +1,121 @@
+<template>
+	<view class="container">
+		<!-- 状态栏占位 -->
+		<view class="status-bar"></view>
+		
+		<!-- 内容区域（图片） -->
+		<view class="content">
+			<image class="full-image" src="/static/images/knowus.jpg" mode="aspectFill"></image>
+		</view>
+		
+		<!-- 底部导航栏 -->
+		<view class="tabbar">
+			<view class="tabbar-item" @tap="navigateToChat">
+				<view class="tabbar-icon-box">
+					<fui-icon name="message" :size="48" color="#333333"></fui-icon>
+					<text class="tabbar-text">聊天</text>
+				</view>
+			</view>
+			<view class="tabbar-item" @tap="navigateToHome">
+				<view class="tabbar-icon-box">
+					<fui-icon name="home" :size="48" color="#333333"></fui-icon>
+					<text class="tabbar-text">主页</text>
+				</view>
+			</view>
+			<view class="tabbar-item" @tap="navigateToMy">
+				<view class="tabbar-icon-box">
+					<fui-icon name="my" :size="48" color="#333333"></fui-icon>
+					<text class="tabbar-text">我的</text>
+				</view>
+			</view>
+		</view>
+	</view>
+</template>
+
+<script>
+	export default {
+		data() {
+			return {
+				
+			}
+		},
+		methods: {
+			navigateToChat() {
+				uni.redirectTo({
+					url: '/pages/index/index'
+				})
+			},
+			navigateToHome() {
+				uni.redirectTo({
+					url: '/pages/home/home'
+				})
+			},
+			navigateToMy() {
+				uni.navigateTo({
+					url: '/pages/my/my'
+				})
+			}
+		}
+	}
+</script>
+
+<style>
+	.container {
+		flex: 1;
+		background-color: #FFFFFF;
+	}
+	
+	.status-bar {
+		height: var(--status-bar-height);
+		background-color: #FFFFFF;
+	}
+	
+	.content {
+		flex: 1;
+		margin-bottom: 200rpx;
+	}
+	
+	.full-image {
+		width: 750rpx;
+		height: 100vh;
+		margin-top: -88rpx; /* 抵消状态栏的高度 */
+	}
+	
+	/* TabBar样式 */
+	.tabbar {
+		position: fixed;
+		bottom: 0;
+		left: 0;
+		right: 0;
+		height: 200rpx;
+		background-color: #FFFFFF;
+		flex-direction: row;
+		justify-content: space-around;
+		align-items: center;
+		border-top-width: 1rpx;
+		border-top-color: #EEEEEE;
+		padding-bottom: env(safe-area-inset-bottom);
+	}
+	
+	.tabbar-item {
+		flex: 1;
+		height: 100%;
+		justify-content: center;
+		align-items: center;
+	}
+	
+	.tabbar-icon-box {
+		justify-content: center;
+		align-items: center;
+	}
+	
+	.tabbar-text {
+		font-size: 20rpx;
+		color: #333333;
+		margin-top: 4rpx;
+	}
+	
+	.tabbar-text-active {
+		color: #465CFF;
+	}
+</style>
