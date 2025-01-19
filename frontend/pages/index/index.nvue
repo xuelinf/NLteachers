@@ -58,8 +58,21 @@
 		methods: {
 			// 加载聊天记录
 			loadChatHistory() {
-				for (const botType of BotType){
-					console.log(botType);
+				this.list.length = 0;
+				for (const botType in BotType) {
+					const messageRecords = uni.getStorageSync('messageRecords-'+BotType[botType]) || [];
+					if (messageRecords&&messageRecords.length>0){
+						const msg = messageRecords[messageRecords.length-1];
+						const contentList = msg.content.split('\n');
+						this.list.push({
+							// ...item,
+							time: this.formatTime(msg.timestamp),
+							msg: contentList[0],
+							name: botType,
+							num: 0, // 未读消息数，可以根据需要设置
+							avatar: '/static/images/chat/avatar/img_avatar_2.png' // 使用统一的头像
+						});
+					}
 				}
 				// try {
 				// 	const chatHistory = uni.getStorageSync('chatHistory') || [];

@@ -232,6 +232,7 @@
 							
 							// 添加剩余的文本
 							processedContent += content.slice(lastIndex);
+							processedContent = processedContent.trim();
 							
 							// 更新当前消息的内容（移除markdown图片语法）
 							this.currentTypingMessage.content = processedContent;
